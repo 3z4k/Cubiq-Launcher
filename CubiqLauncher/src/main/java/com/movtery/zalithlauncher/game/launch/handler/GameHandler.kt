@@ -79,7 +79,7 @@ class GameHandler(
     override val inputArea = _inputArea.asStateFlow()
 
     private var isGameRendering = false
-    private var showGameInfo by mutableStateOf(true)
+    private var showGameInfo by mutableStateOf(false)
 
     /**
      * 日志展示状态
@@ -249,7 +249,7 @@ class GameHandler(
     }
 
     private fun refreshControls() {
-        ControlManager.refresh()
+        ControlManager.checkDefaultAndRefresh(activity)
     }
 
     init {

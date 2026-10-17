@@ -74,27 +74,32 @@ class UnpackJreTask(
         }
     }
 
+    private fun getAvailableRuntime(): String? {
+        val allPacks = runCatching { assetManager.list(jre.jrePath) }.getOrNull() ?: return null
+        val target = "bin-" + Architecture.archAsString(ZLApplication.DEVICE_ARCHITECTURE) + ".tar.xz"
+        if (allPacks.contains(target)) return target
+        if (ZLApplication.DEVICE_ARCHITECTURE == Architecture.ARCH_ARM64 && allPacks.contains("bin-arm.tar.xz")) {
+            return "bin-arm.tar.xz"
+        }
+        if (ZLApplication.DEVICE_ARCHITECTURE == Architecture.ARCH_ARM && allPacks.contains("bin-arm64.tar.xz")) {
+            return "bin-arm64.tar.xz"
+        }
+        return null
+    }
+
     private fun isJreArchSupported(): Boolean {
-        return runCatching {
-            val allPacks = assetManager.list(jre.jrePath) ?: return@runCatching false
-            //检查是否包含符合当前设备架构的环境
-            val runtime = getRuntimeByArch()
-            allPacks.contains(runtime).also {
-                Logger.info(TAG, "Device requires environment: ${jre.jrePath}/$runtime, contains = $it")
-            }
-        }.getOrElse { e ->
-            Logger.warning(TAG, "Failed to list assets directory", e)
-            false
+        val runtime = getAvailableRuntime()
+        return (runtime != null).also {
+            Logger.info(TAG, "Device environment for ${jre.jrePath}: $runtime, supported = $it")
         }
     }
 
-    private fun getRuntimeByArch() = "bin-" + Architecture.archAsString(ZLApplication.DEVICE_ARCHITECTURE) + ".tar.xz"
-
     override suspend fun run() {
+        val runtimeBin = getAvailableRuntime() ?: throw IllegalStateException("No compatible JRE runtime found in assets for ${jre.jrePath}")
         runCatching {
             RuntimesManager.installRuntimeBinPack(
                 universalFileInputStream = assetManager.open(jre.jrePath + "/universal.tar.xz"),
-                platformBinsInputStream = assetManager.open(jre.jrePath + "/" + getRuntimeByArch()),
+                platformBinsInputStream = assetManager.open(jre.jrePath + "/" + runtimeBin),
                 name = jre.jreName,
                 binPackVersion = launcherRuntimeVersion,
                 updateProgress = { textRes, textArgs ->

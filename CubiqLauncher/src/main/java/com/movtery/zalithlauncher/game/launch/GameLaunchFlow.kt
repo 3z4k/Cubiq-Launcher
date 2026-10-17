@@ -120,7 +120,15 @@ class GameLaunchFlow(scope: CoroutineScope) {
                 when (th) {
                     is LaunchReloginRequired -> onReloginRequired(th.account)
                     is LaunchCheckFailed -> onRefreshFailed(th.account, th.cause ?: th)
-                    else -> {}
+                    else -> {
+                        submitError(
+                            ErrorViewModel.ThrowableMessage(
+                                title = androidText("Launch Failed"),
+                                message = androidText(th.localizedMessage ?: th.message ?: th.toString())
+                            )
+                        )
+                        onComplete()
+                    }
                 }
             },
         )
@@ -197,7 +205,10 @@ class GameLaunchFlow(scope: CoroutineScope) {
             }
 
             val jarFile = version.getClientJar()
-            val needDownloadOrVerify = !version.skipGameIntegrityCheck() || !jarFile.exists()
+            val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+            val inheritedJar = version.getInheritedClientJar(mcVer)
+            val hasJar = (jarFile.exists() && jarFile.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
+            val needDownloadOrVerify = !version.skipGameIntegrityCheck() || !hasJar
             if (needDownloadOrVerify) {
                 //校验并修复游戏文件 / 自动下载缺失的游戏核心文件
                 addTask(

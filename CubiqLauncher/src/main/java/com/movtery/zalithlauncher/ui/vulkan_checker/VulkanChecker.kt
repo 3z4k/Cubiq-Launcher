@@ -18,17 +18,24 @@
 
 package com.movtery.zalithlauncher.ui.vulkan_checker
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
@@ -39,10 +46,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.movtery.zalithlauncher.R
@@ -89,7 +99,8 @@ fun VulkanChecker(
             ) {
                 BoxWithConstraints(
                     modifier = Modifier
-                        .fillMaxWidth(0.5f)
+                        .fillMaxWidth(0.92f)
+                        .widthIn(max = 480.dp)
                         .heightIn(max = rememberDialogMaxHeight())
                         .fillMaxHeight(),
                     contentAlignment = Alignment.Center
@@ -99,18 +110,22 @@ fun VulkanChecker(
                             .padding(all = 6.dp)
                             .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                             .wrapContentHeight(),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        color = cardColor(false),
-                        contentColor = onCardColor(),
-                        shadowElevation = 6.dp
+                        shape = RoundedCornerShape(3.dp),
+                        color = Color(0xFF1E1E20),
+                        contentColor = Color.White,
+                        border = BorderStroke(1.5.dp, Color(0xFF383838)),
+                        shadowElevation = 8.dp
                     ) {
                         Column(
-                            modifier = Modifier.padding(all = 24.dp),
+                            modifier = Modifier.padding(all = 20.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.game_vulkan_check_title),
-                                style = MaterialTheme.typography.headlineSmall
+                                text = "VULKAN COMPATIBILITY CHECK",
+                                fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = Color.White
                             )
 
                             val scrollState = rememberScrollState()
@@ -120,71 +135,97 @@ fun VulkanChecker(
                                     .fillMaxWidth()
                                     .fadeEdge(scrollState)
                                     .verticalScrollWithBar(scrollState),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                CompositionLocalProvider(
-                                    LocalTextStyle provides MaterialTheme.typography.labelMedium
-                                ) {
-                                    val data = operation.data
-                                    if (data == null) {
-                                        Text(text = stringResource(R.string.game_vulkan_check_failed))
-                                    } else {
-                                        val profiles = data.profileSupport()
+                                val data = operation.data
+                                if (data == null) {
+                                    Text(
+                                        text = stringResource(R.string.game_vulkan_check_failed),
+                                        fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                        color = Color(0xFFFF5555),
+                                        fontSize = 12.sp
+                                    )
+                                } else {
+                                    val profiles = data.profileSupport()
 
-                                        //总体结论
-                                        val summary = when {
-                                            profiles.all { it.supported } ->
-                                                stringResource(R.string.game_vulkan_check_supp, profiles.first().since)
-                                            profiles.none { it.supported } ->
-                                                stringResource(R.string.game_vulkan_check_unsupp)
-                                            else ->
-                                                stringResource(R.string.game_vulkan_check_partial)
+                                    val summary = when {
+                                        profiles.all { it.supported } ->
+                                            stringResource(R.string.game_vulkan_check_supp, profiles.first().since)
+                                        profiles.none { it.supported } ->
+                                            stringResource(R.string.game_vulkan_check_unsupp)
+                                        else ->
+                                            stringResource(R.string.game_vulkan_check_partial)
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(Color(0xFF28282A))
+                                            .border(BorderStroke(1.dp, Color(0xFF3A3A3C)), RoundedCornerShape(2.dp))
+                                            .padding(10.dp)
+                                    ) {
+                                        Text(
+                                            text = summary,
+                                            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                            fontSize = 12.sp,
+                                            color = if (profiles.any { it.supported }) Color(0xFF55FF55) else Color(0xFFFF9999),
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+
+                                    // Vulkan Version & Driver
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "Vulkan: ${data.versionString}",
+                                            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFFAAAAAA)
+                                        )
+                                        Text(
+                                            text = "Turnip: ${operation.useTurnip}",
+                                            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFFAAAAAA)
+                                        )
+                                    }
+
+                                    // Informative note about OpenGL / Krypton Wrapper
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(Color(0xFF1E281E))
+                                            .border(BorderStroke(1.dp, Color(0xFF2E4C22)), RoundedCornerShape(2.dp))
+                                            .padding(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "Note: Standard Minecraft versions (1.7.10 – 1.21.x) run via OpenGL ES 3 (Krypton Wrapper) and do not need Vulkan support.",
+                                            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFFAADD99),
+                                            lineHeight = 15.sp
+                                        )
+                                    }
+
+                                    // Extensions & features
+                                    TextGroup(text = stringResource(R.string.game_vulkan_check_extensions)) {
+                                        VulkanRequirements.EXTENSIONS.forEach {
+                                            DependencyText(
+                                                dependency = it,
+                                                supported = data.supports(it)
+                                            )
                                         }
-                                        Text(text = summary)
-
-                                        //仅在部分版本区间受支持时，展示各版本区间的支持情况
-                                        if (profiles.distinctBy { it.supported }.size > 1) {
-                                            TextGroup(text = stringResource(R.string.game_vulkan_check_versions)) {
-                                                profiles.forEach { profile ->
-                                                    Row(
-                                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                                    ) {
-                                                        Text(
-                                                            text = "Minecraft ${profile.versionRangeText}"
-                                                        )
-                                                        Text(
-                                                            text = if (profile.supported) {
-                                                                stringResource(R.string.game_vulkan_check_profile_supp)
-                                                            } else {
-                                                                stringResource(R.string.game_vulkan_check_profile_unsupp)
-                                                            }
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        //版本号
-                                        Text(stringResource(R.string.game_vulkan_check_version, data.versionString))
-                                        //是否使用 Turnip
-                                        Text(stringResource(R.string.game_vulkan_check_turnip, operation.useTurnip))
-
-                                        //各功能/扩展的支持情况与版本依赖标注
-                                        TextGroup(text = stringResource(R.string.game_vulkan_check_extensions)) {
-                                            VulkanRequirements.EXTENSIONS.forEach {
-                                                DependencyText(
-                                                    dependency = it,
-                                                    supported = data.supports(it)
-                                                )
-                                            }
-                                        }
-                                        TextGroup(text = stringResource(R.string.game_vulkan_check_features)) {
-                                            VulkanRequirements.FEATURES.forEach {
-                                                DependencyText(
-                                                    dependency = it,
-                                                    supported = data.supports(it)
-                                                )
-                                            }
+                                    }
+                                    TextGroup(text = stringResource(R.string.game_vulkan_check_features)) {
+                                        VulkanRequirements.FEATURES.forEach {
+                                            DependencyText(
+                                                dependency = it,
+                                                supported = data.supports(it)
+                                            )
                                         }
                                     }
                                 }
@@ -194,15 +235,18 @@ fun VulkanChecker(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.End
                             ) {
-                                FilledTonalButton(
-                                    modifier = Modifier.focusProperties { canFocus = false },
+                                com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(38.dp),
                                     onClick = {
                                         confirmResult()
                                         onChange(VCOperation.None)
-                                    }
-                                ) {
-                                    Text(stringResource(R.string.generic_confirm))
-                                }
+                                    },
+                                    style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN,
+                                    text = "CONTINUE",
+                                    fontSize = 12.sp
+                                )
                             }
                         }
                     }

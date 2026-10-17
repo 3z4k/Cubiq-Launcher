@@ -55,7 +55,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
@@ -77,6 +81,8 @@ import com.movtery.zalithlauncher.game.plugin.natives.NativePluginManager
 import com.movtery.zalithlauncher.game.plugin.renderer.RendererPluginManager
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 import com.movtery.zalithlauncher.game.renderer.Renderers
+import com.movtery.zalithlauncher.game.renderer.renderers.KopperZinkRenderer
+import com.movtery.zalithlauncher.game.renderer.renderers.NGGL4ESRenderer
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.hasVulkanBackend
 import com.movtery.zalithlauncher.game.version.installed.utils.isBiggerVer
@@ -304,12 +310,35 @@ fun LaunchGameOperation(
                 }
 
                 Renderers.setCurrentRenderer(version.getRenderer())
-                val currentRenderer = Renderers.getCurrentRenderer()
+                var currentRenderer = Renderers.getCurrentRenderer()
 
                 val mcVer = version.getVersionInfo()!!.minecraftVersion
 
                 // 设备完全支持 Vulkan 时跳过渲染器的版本支持检查
-                if (!version.hasVulkanBackend() || !ensureVulkanSupported(version)) {
+                val hasVulkan = version.hasVulkanBackend()
+                val currentRendererId = currentRenderer.getRendererId().lowercase()
+                val rendererRequiresVulkan = currentRenderer == KopperZinkRenderer || currentRendererId.contains("zink")
+                val needsVulkan = hasVulkan || rendererRequiresVulkan
+
+                val isVulkanSupported = if (needsVulkan) {
+                    ensureVulkanSupported(version)
+                } else {
+                    true
+                }
+
+                if (needsVulkan && !isVulkanSupported) {
+                    // 设备不支持 Vulkan，而该版本带有 Vulkan 后端或当前渲染器需要 Vulkan。
+                    // 自动平滑回退到无需 Vulkan 的 Krypton Wrapper (NGGL4ES)
+                    Renderers.setCurrentRenderer(NGGL4ESRenderer.getUniqueIdentifier())
+                    currentRenderer = Renderers.getCurrentRenderer()
+                    android.widget.Toast.makeText(
+                        activity,
+                        "Non-Vulkan device detected: Switched to Krypton Wrapper (OpenGL ES 3) for compatibility!",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                if (!hasVulkan || !isVulkanSupported) {
                     val isRendererUnsupported =
                         (currentRenderer.getMinMCVersion()?.let { mcVer.isLowerVer(it) } ?: false) ||
                                 (currentRenderer.getMaxMCVersion()?.let { mcVer.isBiggerVer(it) } ?: false)
@@ -486,80 +515,69 @@ private fun AccountRefreshFailedDialog(
     onRetry: () -> Unit,
     onCancel: () -> Unit
 ) {
-    Dialog(
+    com.movtery.zalithlauncher.ui.components.MinecraftDialogContainer(
         onDismissRequest = onCancel
     ) {
-        BoxWithConstraints(
+        Text(
+            text = stringResource(R.string.account_refresh_failed_title),
+            color = Color.White,
+            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp
+        )
+
+        Column(
             modifier = Modifier
-                .heightIn(max = rememberDialogMaxHeight())
-                .fillMaxHeight(),
-            contentAlignment = Alignment.Center
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState())
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Surface(
+            Text(
+                text = com.movtery.zalithlauncher.ui.resolveAndroidString(accountErrorText(error)),
+                color = Color(0xFFFF5555),
+                fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                fontSize = 12.sp
+            )
+            Text(
+                text = stringResource(R.string.account_refresh_failed_skip_message),
+                color = Color(0xFFAAAAAA),
+                fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                fontSize = 11.sp
+            )
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            com.movtery.zalithlauncher.ui.components.MinecraftButton(
                 modifier = Modifier
-                    .padding(all = 6.dp)
-                    .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
-                    .wrapContentHeight(),
-                shape = MaterialTheme.shapes.extraLarge,
-                color = cardColor(false),
-                contentColor = onCardColor(),
-                shadowElevation = 6.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.account_refresh_failed_title),
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Spacer(modifier = Modifier.size(12.dp))
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f, fill = false)
-                            .verticalScroll(rememberScrollState())
-                            .fillMaxWidth()
-                    ) {
-                        AndroidStringText(
-                            text = accountErrorText(error),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = stringResource(R.string.account_refresh_failed_skip_message),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    Spacer(modifier = Modifier.size(16.dp))
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        PositionButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            position = ButtonPosition.Top,
-                            onClick = onRetry
-                        ) {
-                            MarqueeText(text = stringResource(R.string.account_refresh_failed_retry))
-                        }
-                        PositionFilledTonalButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            position = ButtonPosition.Middle,
-                            onClick = onSkip
-                        ) {
-                            MarqueeText(text = stringResource(R.string.account_refresh_failed_skip))
-                        }
-                        PositionFilledTonalButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            position = ButtonPosition.Bottom,
-                            onClick = onCancel
-                        ) {
-                            MarqueeText(text = stringResource(R.string.generic_cancel))
-                        }
-                    }
-                }
-            }
+                    .fillMaxWidth()
+                    .height(38.dp),
+                onClick = onRetry,
+                style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN,
+                text = stringResource(R.string.account_refresh_failed_retry).uppercase(),
+                fontSize = 12.sp
+            )
+            com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp),
+                onClick = onSkip,
+                style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
+                text = stringResource(R.string.account_refresh_failed_skip).uppercase(),
+                fontSize = 12.sp
+            )
+            com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp),
+                onClick = onCancel,
+                style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
+                text = stringResource(R.string.generic_cancel).uppercase(),
+                fontSize = 12.sp
+            )
         }
     }
 }

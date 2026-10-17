@@ -42,7 +42,16 @@ fun DefaultSwitch(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: SwitchColors = SwitchDefaults.colors(),
+    colors: SwitchColors = SwitchDefaults.colors(
+        checkedThumbColor = Color.White,
+        checkedTrackColor = Color(0xFF2E8540),
+        checkedBorderColor = Color(0xFF388E3C),
+        checkedIconColor = Color(0xFF1B5E20),
+        uncheckedThumbColor = Color(0xFFAAAAAA),
+        uncheckedTrackColor = Color(0xFF26262B),
+        uncheckedBorderColor = Color(0xFF424248),
+        uncheckedIconColor = Color(0xFF26262B)
+    ),
     interactionSource: MutableInteractionSource? = null
 ) {
     Switch(

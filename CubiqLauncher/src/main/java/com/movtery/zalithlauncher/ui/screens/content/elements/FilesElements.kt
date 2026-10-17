@@ -39,6 +39,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
@@ -72,7 +74,8 @@ fun BaseFileItem(
                     R.drawable.ic_description_outlined
                 }
             ),
-            contentDescription = null
+            contentDescription = null,
+            tint = if (file.isDirectory) Color(0xFFFFCA28) else Color(0xFFAAAAAA)
         )
         Column(
             modifier = Modifier
@@ -80,7 +83,7 @@ fun BaseFileItem(
         ) {
             MarqueeText(
                 text = file.name,
-                style = MaterialTheme.typography.labelMedium
+                style = MaterialTheme.typography.labelMedium.copy(fontFamily = MinecraftFontFamily)
             )
             Row(
                 modifier = Modifier.basicMarquee(Int.MAX_VALUE),

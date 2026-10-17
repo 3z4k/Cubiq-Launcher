@@ -75,7 +75,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
             signingConfig = if (System.getenv("STORE_PASSWORD") != null || File(rootDir, ".store_password.txt").exists()) {
                 signingConfigs.getByName("releaseBuild")
             } else {
@@ -153,17 +153,7 @@ androidComponents {
                     task.doLast {
                         val assetsDir = task.outputDir.get().asFile
                         val tag = "JREAssetsCleanup"
-                        logger.lifecycle("[$tag] arch: $projectArch")
-                        val jreList = listOf("jre-8", "jre-17", "jre-21", "jre-25")
-                        jreList.forEach { jreVersion ->
-                            val runtimeDir = File("$assetsDir/runtimes/$jreVersion")
-                            logger.lifecycle("[$tag] runtimeDir: ${runtimeDir.absolutePath}")
-                            runtimeDir.listFiles()?.forEach {
-                                if (projectArch != "all" && it.name != "version" && !it.name.contains("universal") && it.name != "bin-$projectArch.tar.xz") {
-                                    logger.lifecycle("[$tag] delete: $it : ${it.delete()}")
-                                }
-                            }
-                        }
+                        logger.lifecycle("[$tag] arch: $projectArch - keeping all Java runtimes intact")
 
                         if (projectArch == "all") return@doLast
                         val abi = when (projectArch) {

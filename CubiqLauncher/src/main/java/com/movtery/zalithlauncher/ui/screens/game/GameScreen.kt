@@ -83,6 +83,7 @@ import com.movtery.zalithlauncher.game.sdl.SdlTextSender
 import com.movtery.zalithlauncher.game.support.touch_controller.touchControllerInputModifier
 import com.movtery.zalithlauncher.game.support.touch_controller.touchControllerTouchModifier
 import com.movtery.zalithlauncher.game.version.installed.Version
+import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.enums.isLauncherInDarkTheme
 import com.movtery.zalithlauncher.setting.enums.toAction
@@ -266,7 +267,18 @@ private class GameViewModel(
                 val layout = withContext(Dispatchers.IO) {
                     delay(10L.milliseconds) //刻意等待一会再加载
                     currentControlFile = layoutFile
-                    getLayout(layoutFile)
+                    var l = getLayout(layoutFile)
+                    if (l === EmptyControlLayout || l.layers.isEmpty()) {
+                        val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
+                            .takeIf { it.exists() && it != layoutFile }
+                            ?: File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+                                .takeIf { it.exists() && it != layoutFile }
+                        if (fallback != null) {
+                            currentControlFile = fallback
+                            l = getLayout(fallback)
+                        }
+                    }
+                    l
                 }
                 //将控制布局加载为可供Compose加载的形式
                 observableLayout = ObservableControlLayout(layout)
@@ -665,7 +677,7 @@ fun GameScreen(
                 .padding(all = 16.dp),
             versionName = version.getVersionName(),
             versionInfo = version.getVersionInfo()?.getInfoString(),
-            visible = showGameInfo,
+            visible = false,
             onClose = onInfoBoxClose
         )
 

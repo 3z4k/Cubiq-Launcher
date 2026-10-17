@@ -27,9 +27,13 @@ object FreedrenoRenderer : RendererInterface {
 
     override fun getRendererName(): String = "Freedreno (Adreno)"
 
-    override fun getMaxMCVersion(): String = "26.3-snapshot-3"
+    override fun getRendererSummary(): String = "Open-source Gallium driver optimized for Qualcomm Snapdragon Adreno GPUs."
 
-    override fun getDisplayMaxMCVersion(): String = "26.2"
+    override fun getCompatibilityDescription(): String = "MC 1.17+ (Snapdragon / Adreno GPUs)"
+
+    override fun getMaxMCVersion(): String? = null
+
+    override fun getDisplayMaxMCVersion(): String? = null
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }
 

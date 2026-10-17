@@ -63,6 +63,20 @@ interface RendererInterface {
     fun getDisplayMaxMCVersion(): String? = getMaxMCVersion()
 
     /**
+     * 获取渲染器兼容性说明（展示最佳兼容的 Minecraft 版本及架构信息）
+     */
+    fun getCompatibilityDescription(): String {
+        val min = getDisplayMinMCVersion()
+        val max = getDisplayMaxMCVersion()
+        return when {
+            min != null && max != null -> "MC $min – $max"
+            min != null -> "MC $min+"
+            max != null -> "MC <= $max"
+            else -> "All MC Versions"
+        }
+    }
+
+    /**
      * 获取渲染器的环境变量
      */
     fun getRendererEnv(): Lazy<Map<String, String>>

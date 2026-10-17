@@ -20,8 +20,10 @@ package com.movtery.zalithlauncher.game.multirt
 
 import android.system.Os
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.ZLApplication.Companion.DEVICE_ARCHITECTURE
 import com.movtery.zalithlauncher.components.jre.Jre
 import com.movtery.zalithlauncher.path.PathManager
+import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
@@ -86,39 +88,85 @@ object RuntimesManager {
     fun loadRuntime(name: String, forceLoad: Boolean = false): Runtime {
         return cache[name]?.takeIf { !forceLoad } ?: run {
             val runtimeDir = File(RUNTIME_FOLDER, name)
-            val releaseFile = File(runtimeDir, "release")
+            val internalJre = Jre.entries.firstOrNull { it.jreName == name }
+            val defaultMajorVersion = internalJre?.majorVersion ?: 0
 
-            if (!releaseFile.exists()) return Runtime(name).also { cache[name] = it }
+            if (!runtimeDir.exists()) {
+                return Runtime(
+                    name = name,
+                    versionString = null,
+                    arch = null,
+                    javaVersion = defaultMajorVersion,
+                    isProvidedByLauncher = internalJre != null,
+                    isJDK8 = internalJre == Jre.JRE_8
+                ).also { cache[name] = it }
+            }
 
-            runCatching {
-                val content = releaseFile.readText()
-                val javaVersion = content.extractUntilCharacter(JAVA_VERSION_STR, '"')
-                val osArch = content.extractUntilCharacter(OS_ARCH_STR, '"')
+            val releaseFile = File(runtimeDir, "release").takeIf { it.exists() }
+                ?: File(runtimeDir, "jre/release").takeIf { it.exists() }
 
-                if (javaVersion != null && osArch != null) {
-                    val versionParts = javaVersion.split('.')
-                    val majorVersion = if (versionParts.first() == "1") {
-                        versionParts.getOrNull(1)?.toIntOrNull() ?: 0
-                    } else {
-                        versionParts.first().toIntOrNull() ?: 0
-                    }
+            var detectedJavaVersion: String? = null
+            var detectedArch: String? = null
 
-                    Runtime(
-                        name = name,
-                        versionString = javaVersion,
-                        arch = osArch,
-                        javaVersion = majorVersion,
-                        isProvidedByLauncher = Jre.entries.any { it.jreName == name },
-                        isJDK8 = isJDK8(runtimeDir.absolutePath)
-                    )
-                } else {
-                    Runtime(name)
+            if (releaseFile != null) {
+                runCatching {
+                    val content = releaseFile.readText()
+                    detectedJavaVersion = content.extractUntilCharacter(JAVA_VERSION_STR, '"')
+                    detectedArch = content.extractUntilCharacter(OS_ARCH_STR, '"')
+                }.onFailure { e ->
+                    Logger.warning(TAG, "Failed to read release file for runtime $name", e)
                 }
-            }.onFailure { e ->
-                Logger.error(TAG, "Failed to load runtime $name", e)
-            }.getOrElse {
-                Runtime(name)
-            }.also { cache[name] = it }
+            }
+
+            // Fallback arch detection if missing or release file didn't specify
+            if (detectedArch == null) {
+                val libDirs = listOf(File(runtimeDir, "lib"), File(runtimeDir, "jre/lib"))
+                for (libDir in libDirs) {
+                    if (libDir.exists() && libDir.isDirectory) {
+                        val archDir = libDir.listFiles()?.firstOrNull { child ->
+                            child.isDirectory && Architecture.archAsInt(child.name) != Architecture.UNSUPPORTED_ARCH
+                        }
+                        if (archDir != null) {
+                            detectedArch = archDir.name
+                            break
+                        }
+                    }
+                }
+                if (detectedArch == null) {
+                    detectedArch = when (DEVICE_ARCHITECTURE) {
+                        Architecture.ARCH_ARM64 -> "aarch64"
+                        Architecture.ARCH_ARM -> "arm"
+                        Architecture.ARCH_X86_64 -> "x86_64"
+                        Architecture.ARCH_X86 -> "i386"
+                        else -> null
+                    }
+                }
+            }
+
+            // Fallback major version detection
+            val majorVersion = if (detectedJavaVersion != null) {
+                val versionParts = detectedJavaVersion!!.split('.')
+                if (versionParts.first() == "1") {
+                    versionParts.getOrNull(1)?.toIntOrNull() ?: defaultMajorVersion
+                } else {
+                    versionParts.first().toIntOrNull() ?: defaultMajorVersion
+                }
+            } else {
+                defaultMajorVersion
+            }
+
+            if (detectedJavaVersion == null && majorVersion > 0) {
+                detectedJavaVersion = if (majorVersion == 8) "1.8.0" else "$majorVersion.0.0"
+            }
+
+            Runtime(
+                name = name,
+                versionString = detectedJavaVersion,
+                arch = detectedArch,
+                javaVersion = majorVersion,
+                isProvidedByLauncher = internalJre != null,
+                isJDK8 = isJDK8(runtimeDir.absolutePath) || (majorVersion == 8 && File(runtimeDir, "jre").exists())
+            ).also { cache[name] = it }
         }
     }
 
@@ -157,8 +205,14 @@ object RuntimesManager {
         if (!dest.exists()) return@withContext
         var libFolder = "lib"
 
-        val arch = runtime.arch
-        if (arch != null && dest.child(libFolder, arch).exists()) {
+        val arch = runtime.arch ?: run {
+            val libDir = dest.child("lib")
+            libDir.listFiles()?.firstOrNull { child ->
+                child.isDirectory && Architecture.archAsInt(child.name) != Architecture.UNSUPPORTED_ARCH
+            }?.name ?: Architecture.archAsString(DEVICE_ARCHITECTURE)
+        }
+
+        if (dest.child(libFolder, arch).exists()) {
             libFolder += "/$arch"
         }
 
@@ -167,21 +221,25 @@ object RuntimesManager {
             libFolder = "/jre$libFolder"
         }
 
-        val ftIn = dest.child(libFolder, "libfreetype.so.6")
-        val ftOut = dest.child(libFolder, "libfreetype.so")
-        if (ftIn.exists() && (!ftOut.exists() || ftIn.length() != ftOut.length())) {
-            if (!ftIn.renameTo(ftOut)) throw IOException("Failed to rename freetype")
-        }
-
-        val ft2In = dest.child(libFolder, "libfreetype.so")
-        if (isJDK8 && ft2In.exists()) {
-            ft2In.renameTo(ftOut)
+        runCatching {
+            val ftIn = dest.child(libFolder, "libfreetype.so.6")
+            val ftOut = dest.child(libFolder, "libfreetype.so")
+            if (ftIn.exists() && (!ftOut.exists() || ftIn.length() != ftOut.length())) {
+                if (ftOut.exists()) ftOut.delete()
+                ftIn.renameTo(ftOut)
+            }
         }
 
         val localXawtLib = File(PathManager.DIR_NATIVE_LIB, "libawt_xawt.so")
         val targetXawtLib = dest.child(libFolder, "libawt_xawt.so")
-        if (targetXawtLib.exists()) targetXawtLib.delete()
-        FileUtils.copyFile(localXawtLib, targetXawtLib)
+        if (localXawtLib.exists()) {
+            runCatching {
+                if (targetXawtLib.exists()) targetXawtLib.delete()
+                FileUtils.copyFile(localXawtLib, targetXawtLib)
+            }.onFailure { e ->
+                Logger.warning(TAG, "Failed to copy libawt_xawt.so: ${e.message}")
+            }
+        }
     }
 
     @Throws(IOException::class)

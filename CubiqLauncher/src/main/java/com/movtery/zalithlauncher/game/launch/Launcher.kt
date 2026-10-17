@@ -234,8 +234,9 @@ abstract class Launcher(
             put("os.name", "Linux")
             put("os.version", "Android-${Build.VERSION.RELEASE}")
             put("pojav.path.minecraft", getMinecraftPath())
-            put("pojav.path.private.account", PathManager.DIR_DATA_BASES.absolutePath)
-            put("org.lwjgl.vulkan.libname", "libvulkan.so")
+            if (File("/system/lib64/libvulkan.so").exists() || File("/system/lib/libvulkan.so").exists() || File("/vendor/lib64/libvulkan.so").exists() || File("/vendor/lib/libvulkan.so").exists()) {
+                put("org.lwjgl.vulkan.libname", "libvulkan.so")
+            }
             // LWJGL 3.4 的 Library.loadSystem 通过该属性定位 native 库。
             // 指向 per-version natives 目录，保证 3.4.x 游戏加载对应版本的 liblwjgl.so 等。
             put("org.lwjgl.librarypath", lwjglNativesDir)
@@ -373,15 +374,18 @@ abstract class Launcher(
     }
 
     protected fun getJavaLibDir(): String {
-        val architecture = runtime.arch?.let { arch ->
-            if (Architecture.archAsInt(arch) == ARCH_X86) "i386/i486/i586"
-            else arch
-        } ?: throw IOException("Unsupported runtime environment: ${runtime.name}, arch is null!")
+        val rawArch = runtime.arch ?: Architecture.archAsString(Architecture.getDeviceArchitecture())
+        val architecture = if (Architecture.archAsInt(rawArch) == ARCH_X86) "i386/i486/i586"
+        else rawArch
 
         var libDir = "/lib"
         architecture.split("/").forEach { arch ->
             val file = File(runtimeHome, "lib/$arch")
             if (file.exists() && file.isDirectory()) {
+                libDir = "/lib/$arch"
+            }
+            val jreFile = File(runtimeHome, "jre/lib/$arch")
+            if (jreFile.exists() && jreFile.isDirectory()) {
                 libDir = "/lib/$arch"
             }
         }

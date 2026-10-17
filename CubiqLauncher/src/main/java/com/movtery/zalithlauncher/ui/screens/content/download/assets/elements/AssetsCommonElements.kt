@@ -211,7 +211,9 @@ private fun BasicIdentifier(
             )
             Text(
                 text = text,
-                style = textStyle
+                style = textStyle,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }

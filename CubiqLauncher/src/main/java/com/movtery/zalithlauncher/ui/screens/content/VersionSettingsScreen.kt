@@ -342,16 +342,6 @@ fun VersionSettingsScreen(
                     submitError = submitError
                 )
             }
-
-            // Bottom Nav Bar
-            com.movtery.zalithlauncher.ui.components.MinecraftPCBottomNavBar(
-                selectedItem = 2,
-                onItemSelected = { index ->
-                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
-                    com.movtery.zalithlauncher.ui.screens.content.LauncherNavState.selectedBottomNav = index
-                    backToMainScreen()
-                }
-            )
         }
     }
 }

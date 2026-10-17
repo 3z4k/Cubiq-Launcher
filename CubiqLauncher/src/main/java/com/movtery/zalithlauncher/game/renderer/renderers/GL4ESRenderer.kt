@@ -27,6 +27,10 @@ object GL4ESRenderer : RendererInterface {
 
     override fun getRendererName(): String = "GL4ES"
 
+    override fun getRendererSummary(): String = "Lightweight OpenGL ES 2 wrapper. Ideal for legacy versions on low-end hardware."
+
+    override fun getCompatibilityDescription(): String = "MC 1.7.10 – 1.16.5 (Legacy GLES 2 • Low-end Devices)"
+
     override fun getMaxMCVersion(): String = "1.21.4"
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }

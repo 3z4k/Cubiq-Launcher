@@ -311,11 +311,13 @@ fun MinecraftInstallationsScreen(
                         else -> R.drawable.img_old_grass_block
                     }
 
+                    val mcVer = ver.getVersionInfo()?.minecraftVersion
                     val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName
-                    val versionSubtitle = if (loaderName != null) {
-                        "${ver.getVersionName()} • $loaderName"
-                    } else {
-                        "${ver.getVersionName()} • Official Release"
+                    val versionSubtitle = when {
+                        mcVer != null && loaderName != null -> "$mcVer • $loaderName"
+                        mcVer != null -> "$mcVer • Official Release"
+                        loaderName != null -> "${ver.getVersionName()} • $loaderName"
+                        else -> "${ver.getVersionName()} • Official Release"
                     }
 
                     InstallationCardItem(
@@ -351,50 +353,40 @@ fun MinecraftInstallationsScreen(
                 onDismiss = { showNewInstallationDialog = false },
                 onCreate = { name, version, loader, iconRes, iconId ->
                     showNewInstallationDialog = false
-                    runCatching {
-                        val finalVersionName = if (name.isBlank()) "$version $loader" else name
-                        val versionFolder = File(getVersionsHome(), finalVersionName)
-                        if (!versionFolder.exists()) versionFolder.mkdirs()
-
-                        // 1. Save chosen isometric block icon
-                        saveIconToVersion(context, finalVersionName, iconRes)
-
-                        // 2. Ensure version json exists
-                        val jsonFile = File(versionFolder, "$finalVersionName.json")
-                        if (!jsonFile.exists()) {
-                            val jsonContent = """
-                            {
-                                "id": "$version",
-                                "inheritsFrom": "$version",
-                                "type": "release",
-                                "time": "2024-01-01T00:00:00+00:00",
-                                "releaseTime": "2024-01-01T00:00:00+00:00"
-                            }
-                            """.trimIndent()
-                            jsonFile.writeText(jsonContent)
+                    InstallationDownloadManager.startInstallation(
+                        context = context,
+                        name = name,
+                        version = version,
+                        loader = loader,
+                        iconRes = iconRes,
+                        onSuccess = { installedName ->
+                            createdInstallationName = installedName
                         }
-
-                        // 3. Refresh and select
-                        VersionsManager.refresh("NewInstallationCreated", trySetVersion = finalVersionName)
-                        createdInstallationName = finalVersionName
-
-                        // 4. Auto-schedule background download task so user doesn't need to go to download hub
-                        runCatching {
-                            val downloadTask = com.movtery.zalithlauncher.game.version.download.MinecraftDownloader(
-                                context = context,
-                                version = version,
-                                customName = finalVersionName,
-                                gameHome = com.movtery.zalithlauncher.game.path.getGameHome(),
-                                mode = com.movtery.zalithlauncher.game.version.download.DownloadMode.VERIFY_AND_REPAIR,
-                                onError = { }
-                            ).getDownloadTask()
-                            com.movtery.zalithlauncher.coroutine.TaskSystem.submitTask(downloadTask)
-                        }
-                    }.onFailure { err ->
-                        Toast.makeText(context, "Error creating installation: ${err.message}", Toast.LENGTH_LONG).show()
-                    }
+                    )
                 }
             )
+        }
+
+        val activeInstaller by InstallationDownloadManager.activeInstaller.collectAsStateWithLifecycle()
+        val showInstallerDialog by InstallationDownloadManager.showForegroundDialog.collectAsStateWithLifecycle()
+        val activeInstallName by InstallationDownloadManager.activeInstallationName.collectAsStateWithLifecycle()
+
+        if (showInstallerDialog && activeInstaller != null) {
+            val installTasks by activeInstaller!!.tasksFlow.collectAsStateWithLifecycle()
+            val installLog by activeInstaller!!.logOutput.collectAsStateWithLifecycle()
+            if (installTasks.isNotEmpty()) {
+                com.movtery.zalithlauncher.ui.screens.content.elements.TitleTaskFlowDialog(
+                    title = "INSTALLING ${activeInstallName?.uppercase() ?: "MINECRAFT"}",
+                    tasks = installTasks,
+                    onCancel = {
+                        InstallationDownloadManager.cancelActiveInstallation()
+                    },
+                    onBackground = {
+                        InstallationDownloadManager.dismissToBackground()
+                    },
+                    logOutput = installLog
+                )
+            }
         }
 
         // Cubiq Installation Success Dialog

@@ -90,22 +90,26 @@ private fun getGameManifest(
         )
 
         // Fuse libraries
-        val inheritLibraryList: MutableList<Library> = ArrayList(inheritsManifest.libraries)
-        inheritLibraryList += gameManifest0.libraries
+        val inheritLibraryList: MutableList<Library> = ArrayList(inheritsManifest.libraries ?: emptyList())
+        gameManifest0.libraries?.let { libs ->
+            inheritLibraryList += libs
+        }
         inheritsManifest.libraries = inheritLibraryList
 
         // Inheriting Minecraft 1.13+ with append custom args
         if (inheritsManifest.arguments != null && gameManifest0.arguments != null) {
-            val totalArgList: MutableList<Any?> = ArrayList(inheritsManifest.arguments.game)
+            val baseArgs = inheritsManifest.arguments.game ?: emptyList()
+            val customArgs = gameManifest0.arguments.game ?: emptyList()
+            val totalArgList: MutableList<Any?> = ArrayList(baseArgs)
 
             var nskip = 0
-            for (i in 0..<gameManifest0.arguments.game.size) {
+            for (i in 0..<customArgs.size) {
                 if (nskip > 0) {
                     nskip--
                     continue
                 }
 
-                var perCustomArg: Any = gameManifest0.arguments.game[i]
+                var perCustomArg: Any = customArgs[i] ?: continue
                 if (perCustomArg is String) {
                     var perCustomArgStr = perCustomArg
                     // Check if there is a duplicate argument on combine
@@ -113,12 +117,14 @@ private fun getGameManifest(
                             perCustomArgStr
                         )
                     ) {
-                        perCustomArg = gameManifest0.arguments.game[i + 1]
-                        if (perCustomArg is String) {
-                            perCustomArgStr = perCustomArg
-                            // If the next is argument value, skip it
-                            if (!perCustomArgStr.startsWith("--")) {
-                                nskip++
+                        if (i + 1 < customArgs.size) {
+                            perCustomArg = customArgs[i + 1] ?: ""
+                            if (perCustomArg is String) {
+                                perCustomArgStr = perCustomArg
+                                // If the next is argument value, skip it
+                                if (!perCustomArgStr.startsWith("--")) {
+                                    nskip++
+                                }
                             }
                         }
                     } else {
@@ -135,7 +141,9 @@ private fun getGameManifest(
         gameManifest0 = inheritsManifest
     }
 
-    processLibraries { gameManifest0.libraries }
+    if (gameManifest0.libraries != null) {
+        processLibraries { gameManifest0.libraries }
+    }
 
     if (gameManifest0.javaVersion?.majorVersion == 0) {
         gameManifest0.javaVersion.majorVersion = gameManifest0.javaVersion.version

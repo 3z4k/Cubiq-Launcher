@@ -18,6 +18,7 @@
 
 package com.movtery.zalithlauncher.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -31,17 +32,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -56,21 +56,68 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import com.movtery.zalithlauncher.ui.theme.cardColor
 import com.movtery.zalithlauncher.ui.theme.onCardColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+
+/**
+ * Authentic Minecraft PC Launcher Dialog Container
+ */
+@Composable
+fun MinecraftDialogContainer(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(decorFitsSystemWindows = false)
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .heightIn(max = rememberDialogMaxHeight())
+                .fillMaxHeight(),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                modifier = modifier
+                    .padding(12.dp)
+                    .widthIn(min = 310.dp, max = 460.dp)
+                    .heightIn(max = (maxHeight - 24.dp).coerceAtMost(rememberDialogMaxHeight()))
+                    .wrapContentHeight(),
+                shape = RoundedCornerShape(3.dp),
+                color = Color(0xFF1E1E20),
+                contentColor = Color.White,
+                border = BorderStroke(1.5.dp, Color(0xFF3C3B3B)),
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    content()
+                }
+            }
+        }
+    }
+}
 
 /**
  * 返回对话框内容可用的最大高度，以窗口容器高度为上界
@@ -105,37 +152,58 @@ fun SimpleAlertDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    MinecraftDialogContainer(
         onDismissRequest = {
             if (dismissByDialog) onDismiss()
-        },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .fadeEdge(state = scrollState)
-                    .verticalScrollWithBar(state = scrollState)
-            ) {
-                Text(text = text)
-            }
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                MarqueeText(text = confirmText)
-            }
-        },
-        dismissButton = {
-            FilledTonalButton(onClick = onDismiss) {
-                MarqueeText(text = dismissText)
-            }
         }
-    )
+    ) {
+        Text(
+            text = title,
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            color = Color.White
+        )
+
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fadeEdge(state = scrollState)
+                .verticalScrollWithBar(state = scrollState)
+                .weight(1f, fill = false)
+        ) {
+            Text(
+                text = text,
+                color = Color(0xFFD0D0D0),
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            MinecraftButton(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp),
+                onClick = onDismiss,
+                style = MinecraftButtonStyle.STONE,
+                text = dismissText.uppercase(),
+                fontSize = 13.sp
+            )
+            MinecraftButton(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp),
+                onClick = onConfirm,
+                style = MinecraftButtonStyle.GREEN,
+                text = confirmText.uppercase(),
+                fontSize = 13.sp
+            )
+        }
+    }
 }
 
 /**
@@ -154,32 +222,44 @@ fun SimpleAlertDialog(
     dismissByDialog: Boolean = true,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    MinecraftDialogContainer(
         onDismissRequest = {
             if (dismissByDialog) onDismiss()
-        },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .fadeEdge(state = scrollState)
-                    .verticalScrollWithBar(state = scrollState)
-            ) {
-                Text(text = text)
-            }
-        },
-        confirmButton = {
-            Button(onClick = onDismiss) {
-                MarqueeText(text = confirmText)
-            }
         }
-    )
+    ) {
+        Text(
+            text = title,
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            color = Color.White
+        )
+
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fadeEdge(state = scrollState)
+                .verticalScrollWithBar(state = scrollState)
+                .weight(1f, fill = false)
+        ) {
+            Text(
+                text = text,
+                color = Color(0xFFD0D0D0),
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            )
+        }
+
+        MinecraftButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(38.dp),
+            onClick = onDismiss,
+            style = MinecraftButtonStyle.GREEN,
+            text = confirmText.uppercase(),
+            fontSize = 13.sp
+        )
+    }
 }
 
 @Composable
@@ -192,35 +272,49 @@ fun SimpleAlertDialog(
     onCancel: () -> Unit,
     onDismissRequest: () -> Unit = {}
 ) {
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .fadeEdge(state = scrollState)
-                    .verticalScrollWithBar(state = scrollState)
-            ) {
-                text()
-            }
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                MarqueeText(text = confirmText)
-            }
-        },
-        dismissButton = {
-            FilledTonalButton(onClick = onCancel) {
-                MarqueeText(text = dismissText)
-            }
+    MinecraftDialogContainer(onDismissRequest = onDismissRequest) {
+        Text(
+            text = title,
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            color = Color.White
+        )
+
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fadeEdge(state = scrollState)
+                .verticalScrollWithBar(state = scrollState)
+                .weight(1f, fill = false)
+        ) {
+            text()
         }
-    )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            MinecraftButton(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp),
+                onClick = onCancel,
+                style = MinecraftButtonStyle.STONE,
+                text = dismissText.uppercase(),
+                fontSize = 13.sp
+            )
+            MinecraftButton(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp),
+                onClick = onConfirm,
+                style = MinecraftButtonStyle.GREEN,
+                text = confirmText.uppercase(),
+                fontSize = 13.sp
+            )
+        }
+    }
 }
 
 @Composable
@@ -253,17 +347,19 @@ fun SimpleEditDialog(
             Surface(
                 modifier = Modifier
                     .padding(all = 6.dp)
+                    .widthIn(min = 310.dp, max = 460.dp)
                     .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                     .wrapContentHeight(),
-                shape = MaterialTheme.shapes.extraLarge,
-                color = cardColor(false),
-                contentColor = onCardColor(),
-                shadowElevation = 6.dp
+                shape = RoundedCornerShape(3.dp),
+                color = Color(0xFF1E1E20),
+                contentColor = Color.White,
+                border = BorderStroke(1.5.dp, Color(0xFF3C3B3B)),
+                shadowElevation = 8.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     simpleEditDialogBody(
                         title = title,
@@ -281,20 +377,26 @@ fun SimpleEditDialog(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        FilledTonalButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = onCancel
-                        ) {
-                            MarqueeText(text = stringResource(R.string.generic_cancel))
-                        }
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = onConfirm
-                        ) {
-                            MarqueeText(text = stringResource(R.string.generic_confirm))
-                        }
+                        MinecraftButton(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp),
+                            onClick = onCancel,
+                            style = MinecraftButtonStyle.STONE,
+                            text = stringResource(R.string.generic_cancel).uppercase(),
+                            fontSize = 13.sp
+                        )
+                        MinecraftButton(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp),
+                            onClick = onConfirm,
+                            style = MinecraftButtonStyle.GREEN,
+                            text = stringResource(R.string.generic_confirm).uppercase(),
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
@@ -330,17 +432,19 @@ fun SimpleEditDialog(
             Surface(
                 modifier = Modifier
                     .padding(all = 6.dp)
+                    .widthIn(min = 310.dp, max = 460.dp)
                     .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                     .wrapContentHeight(),
-                shape = MaterialTheme.shapes.extraLarge,
-                color = cardColor(false),
-                contentColor = onCardColor(),
-                shadowElevation = 6.dp
+                shape = RoundedCornerShape(3.dp),
+                color = Color(0xFF1E1E20),
+                contentColor = Color.White,
+                border = BorderStroke(1.5.dp, Color(0xFF3C3B3B)),
+                shadowElevation = 8.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     simpleEditDialogBody(
                         title = title,
@@ -356,12 +460,15 @@ fun SimpleEditDialog(
                         extraContent = extraContent
                     ).invoke(this)
 
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onConfirm
-                    ) {
-                        MarqueeText(text = stringResource(R.string.generic_confirm))
-                    }
+                    MinecraftButton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(38.dp),
+                        onClick = onConfirm,
+                        style = MinecraftButtonStyle.GREEN,
+                        text = stringResource(R.string.generic_confirm).uppercase(),
+                        fontSize = 13.sp
+                    )
                 }
             }
         }
@@ -385,7 +492,10 @@ private fun simpleEditDialogBody(
 ): @Composable ColumnScope.() -> Unit = {
     Text(
         text = title,
-        style = MaterialTheme.typography.titleMedium
+        fontFamily = MinecraftFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 15.sp,
+        color = Color.White
     )
 
     val scrollState = rememberScrollState()
@@ -523,25 +633,30 @@ fun <T> SimpleListDialog(
         ) {
             Surface(
                 modifier = Modifier
-                    .padding(all = 3.dp)
-                    .heightIn(max = (maxHeight - 6.dp).coerceAtMost(rememberDialogMaxHeight()))
+                    .padding(all = 6.dp)
+                    .widthIn(min = 310.dp, max = 460.dp)
+                    .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                     .wrapContentHeight(),
-                shape = MaterialTheme.shapes.extraLarge,
-                color = cardColor(false),
-                contentColor = onCardColor(),
-                shadowElevation = 3.dp
+                shape = RoundedCornerShape(3.dp),
+                color = Color(0xFF1E1E20),
+                contentColor = Color.White,
+                border = BorderStroke(1.5.dp, Color(0xFF3C3B3B)),
+                shadowElevation = 8.dp
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(18.dp)
                         .wrapContentHeight(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleMedium
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = Color.White
                     )
-                    Spacer(modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.size(14.dp))
 
                     val state = rememberLazyListState()
                     LazyColumn(
@@ -561,20 +676,23 @@ fun <T> SimpleListDialog(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.size(4.dp))
+                    Spacer(modifier = Modifier.size(10.dp))
 
                     if (showConfirm) {
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
+                        MinecraftButton(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(38.dp),
                             onClick = {
                                 if (selectedItem != null) {
                                     onItemSelected(selectedItem!!)
                                     onDismissRequest(true)
                                 }
-                            }
-                        ) {
-                            confirmText()
-                        }
+                            },
+                            style = MinecraftButtonStyle.GREEN,
+                            text = stringResource(R.string.generic_confirm).uppercase(),
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
@@ -624,23 +742,40 @@ fun ProgressDialog(
 ) {
     Dialog(onDismissRequest = {}) {
         Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            color = cardColor(false),
-            contentColor = onCardColor(),
-            shadowElevation = 6.dp
+            modifier = Modifier.widthIn(min = 280.dp, max = 420.dp),
+            shape = RoundedCornerShape(3.dp),
+            color = Color(0xFF1E1E20),
+            contentColor = Color.White,
+            border = BorderStroke(1.5.dp, Color(0xFF3C3B3B)),
+            shadowElevation = 8.dp
         ) {
             Column(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(20.dp)
                     .wrapContentHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = title,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.White
+                )
                 text?.let {
-                    Text(text = it, style = MaterialTheme.typography.labelSmall)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = it,
+                        color = Color(0xFFD0D0D0),
+                        fontSize = 12.sp
+                    )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFF42A62C),
+                    trackColor = Color(0xFF2C2C2E)
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }

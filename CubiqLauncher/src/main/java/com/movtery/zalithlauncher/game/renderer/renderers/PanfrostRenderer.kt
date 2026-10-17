@@ -27,6 +27,10 @@ object PanfrostRenderer : RendererInterface {
 
     override fun getRendererName(): String = "Panfrost (Mali)"
 
+    override fun getRendererSummary(): String = "Open-source Gallium driver for ARM Mali Midgard/Bifrost/Valhall GPUs."
+
+    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.21 (ARM Mali GPUs)"
+
     override fun getMaxMCVersion(): String = "1.21.4"
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }

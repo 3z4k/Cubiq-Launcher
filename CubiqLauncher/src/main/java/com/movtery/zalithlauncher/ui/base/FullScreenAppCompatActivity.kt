@@ -30,6 +30,9 @@ import androidx.activity.compose.LocalActivity
 import androidx.annotation.CallSuper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import kotlin.math.abs
 
 abstract class FullScreenAppCompatActivity : AbstractAppCompatActivity() {
@@ -56,6 +59,14 @@ abstract class FullScreenAppCompatActivity : AbstractAppCompatActivity() {
     override fun onPostResume() {
         super.onPostResume()
         applyFullscreen()
+    }
+
+    @CallSuper
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && isFullScreenActivity()) {
+            applyFullscreen()
+        }
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -149,28 +160,41 @@ abstract class FullScreenAppCompatActivity : AbstractAppCompatActivity() {
      */
     private fun applyFullscreen() {
         if (!isFullScreenActivity()) {
+            WindowCompat.setDecorFitsSystemWindows(window, true)
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
+            controller.show(WindowInsetsCompat.Type.systemBars())
             window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             return
         }
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+
         val decorView = window.decorView
+        val flags = (
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        )
+        decorView.systemUiVisibility = flags
+
         val visibilityChangeListener = OnSystemUiVisibilityChangeListener { visibility: Int ->
             if (!isInMultiWindowMode) {
                 if ((visibility and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                    decorView.systemUiVisibility = (
-                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                    or View.SYSTEM_UI_FLAG_FULLSCREEN
-                                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            )
+                    decorView.systemUiVisibility = flags
+                    controller.hide(WindowInsetsCompat.Type.systemBars())
                 }
             } else {
                 decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
             }
         }
         decorView.setOnSystemUiVisibilityChangeListener(visibilityChangeListener)
-        visibilityChangeListener.onSystemUiVisibilityChange(decorView.systemUiVisibility) //call it once since the UI state may not change after the call, so the activity wont become fullscreen
+        visibilityChangeListener.onSystemUiVisibilityChange(decorView.systemUiVisibility)
 
         refreshIgnoreNotch()
     }
@@ -178,7 +202,11 @@ abstract class FullScreenAppCompatActivity : AbstractAppCompatActivity() {
     fun refreshIgnoreNotch() {
         if (Build.VERSION.SDK_INT >= VERSION_CODES.P) {
             val mode = if (isIgnoreNotch()) {
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                if (Build.VERSION.SDK_INT >= VERSION_CODES.R) {
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                } else {
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
             } else {
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
             }

@@ -19,6 +19,10 @@
 package com.movtery.zalithlauncher.ui.screens.content.download.assets.download
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,9 +40,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -345,8 +356,8 @@ fun DownloadAssetsScreen(
     eventViewModel: EventViewModel,
     onItemClicked: (PlatformClasses, PlatformVersion, iconUrl: String?, deps: List<DependencyEntry>) -> Unit,
     nestedNavKeyClass: Class<out TitledNavKey>? = null,
-    versionsUIWeight: Float = 6.5f,
-    projectUIWeight: Float = 3.5f,
+    versionsUIWeight: Float = 6.0f,
+    projectUIWeight: Float = 4.0f,
     installedChecker: ((PlatformVersion) -> InstalledMod?)? = null,
 ) {
     val viewModel: DownloadScreenViewModel = rememberDownloadAssetsViewModel(key)
@@ -466,44 +477,85 @@ private fun Versions(
         }
         is DownloadAssetsState.Success -> {
             Column(modifier = modifier) {
-                //简单过滤条件
+                // Search and release filter controls
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CheckChip(
-                        selected = viewModel.showOnlyMCRelease,
-                        onClick = {
-                            viewModel.filterWith(showOnlyMCRelease = viewModel.showOnlyMCRelease.not())
-                        },
-                        label = {
-                            Text(text = stringResource(R.string.download_assets_show_only_mc_release))
-                        },
-                    )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(Color(0xFF222224))
+                            .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        BasicTextField(
+                            value = viewModel.searchMCVersion,
+                            onValueChange = { viewModel.filterWith(searchMCVersion = it) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            textStyle = TextStyle(color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp),
+                            cursorBrush = SolidColor(Color(0xFF55FF55)),
+                            decorationBox = { inner ->
+                                if (viewModel.searchMCVersion.isEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.download_assets_search_mc_versions),
+                                        style = TextStyle(color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 11.sp)
+                                    )
+                                }
+                                inner()
+                            }
+                        )
+                    }
 
-                    SimpleTextInputField(
-                        modifier = Modifier.weight(1f),
-                        value = viewModel.searchMCVersion,
-                        onValueChange = { viewModel.filterWith(searchMCVersion = it) },
-                        singleLine = true,
-                        textStyle = TextStyle(color = onCardColor()).copy(fontSize = 12.sp),
-                        hint = {
+                    Box(
+                        modifier = Modifier
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(if (viewModel.showOnlyMCRelease) Color(0xFF263820) else Color(0xFF222224))
+                            .border(
+                                BorderStroke(1.dp, if (viewModel.showOnlyMCRelease) Color(0xFF55FF55) else Color(0xFF383838)),
+                                RoundedCornerShape(3.dp)
+                            )
+                            .clickable {
+                                viewModel.filterWith(showOnlyMCRelease = !viewModel.showOnlyMCRelease)
+                            }
+                            .padding(horizontal = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (viewModel.showOnlyMCRelease) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_check),
+                                    contentDescription = null,
+                                    tint = Color(0xFF55FF55),
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
                             Text(
-                                text = stringResource(R.string.download_assets_search_mc_versions),
-                                style = TextStyle(color = onCardColor()).copy(fontSize = 12.sp)
+                                text = "RELEASE ONLY",
+                                color = if (viewModel.showOnlyMCRelease) Color(0xFF55FF55) else Color(0xFFCCCCCC),
+                                fontFamily = MinecraftFontFamily,
+                                fontSize = 10.sp
                             )
                         }
-                    )
+                    }
                 }
 
                 HorizontalDivider(
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
                         .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    color = Color(0xFF383838)
                 )
 
                 val scrollState = rememberLazyListState()
@@ -576,11 +628,64 @@ private fun ProjectInfo(
     openLink: (url: String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    BackgroundCard(
+    Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge
+        shape = RoundedCornerShape(4.dp),
+        color = Color(0xFF1E1E20),
+        border = BorderStroke(1.dp, Color(0xFF383838))
     ) {
-        Box(modifier = Modifier) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Dedicated non-overlapping header bar for categories, favorites, and platform
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF262628))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ClassesIdentifier(
+                        classes = classes,
+                        iconSize = 14.dp,
+                        textStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                    )
+
+                    val isFavorite = FavoriteProjectsRepository.isFavorite(platform, projectId)
+                    FavoriteIdentifier(
+                        isFavorite = isFavorite,
+                        iconSize = 14.dp,
+                        showText = false,
+                        textStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = MinecraftFontFamily, fontSize = 10.sp),
+                        onClick = {
+                            if (isFavorite) {
+                                FavoriteProjectsRepository.unfavorite(platform, projectId)
+                            } else {
+                                (projectResult as? DownloadAssetsState.Success)
+                                    ?.result?.first?.let { project ->
+                                        FavoriteProjectsRepository.favorite(project, classes)
+                                    }
+                            }
+                        }
+                    )
+                }
+
+                Text(
+                    text = platform.displayName.uppercase(),
+                    color = Color(0xFF888888),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 9.sp,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+
+            HorizontalDivider(color = Color(0xFF383838))
+
+            // Body content area
             when (projectResult) {
                 is DownloadAssetsState.Getting -> {
                     LazyColumn(
@@ -588,17 +693,16 @@ private fun ProjectInfo(
                         contentPadding = PaddingValues(all = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        //图标、标题、简介的骨架
                         item {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 32.dp),
+                                    .padding(top = 12.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 ShimmerBox(
                                     modifier = Modifier
-                                        .clip(shape = RoundedCornerShape(10.dp))
+                                        .clip(shape = RoundedCornerShape(4.dp))
                                         .size(72.dp)
                                 )
                                 Column(
@@ -606,19 +710,17 @@ private fun ProjectInfo(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    //标题
                                     ShimmerBox(
                                         modifier = Modifier
                                             .fillMaxWidth(0.6f)
                                             .height(20.dp)
-                                            .clip(RoundedCornerShape(4.dp))
+                                            .clip(RoundedCornerShape(3.dp))
                                     )
-                                    //简介
                                     ShimmerBox(
                                         modifier = Modifier
                                             .fillMaxWidth(0.9f)
                                             .height(16.dp)
-                                            .clip(RoundedCornerShape(4.dp))
+                                            .clip(RoundedCornerShape(3.dp))
                                     )
                                 }
                             }
@@ -627,7 +729,6 @@ private fun ProjectInfo(
                 }
                 is DownloadAssetsState.Success -> {
                     val (project, mod, mcmod) = projectResult.result
-                    //项目基本信息
                     val platform = remember { project.platform() }
                     val iconUrl = remember { project.platformIconUrl() }
                     val title = remember { project.platformTitle() }
@@ -640,20 +741,18 @@ private fun ProjectInfo(
                         contentPadding = PaddingValues(all = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        //图标、标题、简介
                         item {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 32.dp),
+                                    .padding(top = 12.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 AssetsIcon(
-                                    modifier = Modifier.clip(shape = RoundedCornerShape(10.dp)),
+                                    modifier = Modifier.clip(shape = RoundedCornerShape(4.dp)),
                                     size = 72.dp,
                                     iconUrl = iconUrl
                                 )
-                                //标题、简介
                                 Column(
                                     modifier = Modifier.padding(top = 8.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -661,13 +760,21 @@ private fun ProjectInfo(
                                 ) {
                                     Text(
                                         text = mcmod.getMcmodTitle(title, context),
-                                        style = MaterialTheme.typography.titleMedium,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontFamily = MinecraftFontFamily,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                            color = Color.White
+                                        ),
                                         textAlign = TextAlign.Center
                                     )
-                                    summary?.let { summary ->
+                                    summary?.let { summaryText ->
                                         Text(
-                                            text = summary,
-                                            style = MaterialTheme.typography.bodyMedium,
+                                            text = summaryText,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontFamily = MinecraftFontFamily,
+                                                fontSize = 11.sp,
+                                                color = Color(0xFFCCCCCC)
+                                            ),
                                             textAlign = TextAlign.Center
                                         )
                                     }
@@ -675,7 +782,6 @@ private fun ProjectInfo(
                             }
                         }
 
-                        //相关链接
                         if (!urls.isAllNull()) {
                             item {
                                 Column(
@@ -684,7 +790,10 @@ private fun ProjectInfo(
                                 ) {
                                     Text(
                                         text = stringResource(R.string.download_assets_links),
-                                        style = MaterialTheme.typography.titleMedium
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontFamily = MinecraftFontFamily,
+                                            color = Color(0xFF55FF55)
+                                        )
                                     )
 
                                     ProjectUrlsContent(
@@ -698,7 +807,6 @@ private fun ProjectInfo(
                             }
                         }
 
-                        //屏幕截图
                         items(screenshots) { screenshot ->
                             ScreenshotItemLayout(
                                 modifier = Modifier.fillMaxWidth(),
@@ -727,37 +835,6 @@ private fun ProjectInfo(
                         )
                     }
                 }
-            }
-
-            // 资源类型、收藏开关
-            Row(
-                modifier = Modifier.padding(all = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ClassesIdentifier(
-                    classes = classes,
-                    iconSize = 16.dp,
-                    textStyle = MaterialTheme.typography.labelMedium
-                )
-
-                val isFavorite = FavoriteProjectsRepository.isFavorite(platform, projectId)
-                FavoriteIdentifier(
-                    isFavorite = isFavorite,
-                    iconSize = 16.dp,
-                    textStyle = MaterialTheme.typography.labelMedium,
-                    onClick = {
-                        if (isFavorite) {
-                            FavoriteProjectsRepository.unfavorite(platform, projectId)
-                        } else {
-                            //项目数据未就绪时无法生成收藏缓存，忽略此次操作
-                            (projectResult as? DownloadAssetsState.Success)
-                                ?.result?.first?.let { project ->
-                                    FavoriteProjectsRepository.favorite(project, classes)
-                                }
-                        }
-                    }
-                )
             }
         }
     }

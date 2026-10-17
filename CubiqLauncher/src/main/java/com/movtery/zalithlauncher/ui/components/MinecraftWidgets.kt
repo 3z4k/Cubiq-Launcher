@@ -127,33 +127,33 @@ fun MinecraftButton(
             }
         }
         MinecraftButtonStyle.STONE -> {
-            // Light stone 3D button matching Image 3 (Official PC Launcher "New installation" button)
+            // Authentic Minecraft GUI Slate/Stone 3D button (Options, Cancel, Back, Done)
             if (!enabled) {
                 Tuple6(
-                    Color(0xFF3A3A38),
-                    Color(0xFFB5B4AE),
-                    Color(0xFF7A7973),
-                    listOf(Color(0xFF9E9D97), Color(0xFF8E8D87)),
-                    Color(0xFF686762),
-                    Color.Transparent
+                    Color(0xFF222224),
+                    Color(0xFF3A3A3E),
+                    Color(0xFF1A1A1C),
+                    listOf(Color(0xFF2E2E32), Color(0xFF252528)),
+                    Color(0xFF707075),
+                    Color(0xFF121214)
                 )
             } else if (actuallyPressed) {
                 Tuple6(
-                    Color(0xFF22211F),
-                    Color(0xFF78766E), // Pressed top shadow
-                    Color(0xFFDEDDD8), // Pressed bottom highlight
-                    listOf(Color(0xFFABA9A2), Color(0xFF9E9C95)),
-                    Color(0xFF1B2B3A),
-                    Color.Transparent
+                    Color(0xFF18181A),
+                    Color(0xFF222226), // Pressed top shadow
+                    Color(0xFF55555C), // Pressed bottom highlight
+                    listOf(Color(0xFF2D2D32), Color(0xFF242428)),
+                    Color(0xFFD0D0D0),
+                    Color(0xFF101012)
                 )
             } else {
                 Tuple6(
-                    Color(0xFF22211F), // Dark border
-                    Color(0xFFF0EFEA), // Bright top edge highlight
-                    Color(0xFF7E7C74), // Deep 3D bottom bevel shelf
-                    listOf(Color(0xFFD6D5CF), Color(0xFFC7C6BF)), // Light stone face
-                    Color(0xFF1B2B3A), // Dark navy launcher text
-                    Color.Transparent
+                    Color(0xFF18181A), // Dark outer border
+                    Color(0xFF686870), // Crisp top-edge 3D highlight
+                    Color(0xFF242428), // Bottom bevel shelf
+                    listOf(Color(0xFF45454B), Color(0xFF36363B)), // Medium-dark slate stone face
+                    Color.White, // Authentic crisp white text
+                    Color(0xFF141416) // Text shadow
                 )
             }
         }
