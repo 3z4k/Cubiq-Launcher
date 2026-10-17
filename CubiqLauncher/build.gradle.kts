@@ -149,11 +149,11 @@ androidComponents {
                 val variantName = variant.name.replaceFirstChar { it.uppercaseChar() }
                 afterEvaluate {
                     val task = tasks.named("merge${variantName}Assets").get() as MergeSourceSetFolders
-                    task.inputs.property("lwjglArch", projectArch)
+                    task.inputs.property("arch", projectArch)
                     task.doLast {
                         val assetsDir = task.outputDir.get().asFile
                         val tag = "JREAssetsCleanup"
-                        logger.lifecycle("[$tag] arch: $projectArch - keeping all Java runtimes intact")
+                        logger.lifecycle("[$tag] arch: $projectArch")
 
                         if (projectArch == "all") return@doLast
                         val abi = when (projectArch) {
@@ -163,6 +163,19 @@ androidComponents {
                             "x86_64" -> "x86_64"
                             else -> return@doLast
                         }
+
+                        val jreList = listOf("jre-8", "jre-17", "jre-21", "jre-25")
+                        jreList.forEach { jreVersion ->
+                            val runtimeDir = File(assetsDir, "runtimes/$jreVersion")
+                            if (runtimeDir.isDirectory) {
+                                runtimeDir.listFiles()?.forEach { file ->
+                                    if (file.name != "version" && !file.name.contains("universal") && file.name != "bin-${projectArch}.tar.xz") {
+                                        logger.lifecycle("[$tag] delete non-target JRE: $file: ${file.delete()}")
+                                    }
+                                }
+                            }
+                        }
+
                         val lwjglVersions = file("libs").listFiles { f ->
                             f.name.matches(Regex("lwjgl-\\d+\\.\\d+\\.\\d+-natives-release\\.aar"))
                         }
