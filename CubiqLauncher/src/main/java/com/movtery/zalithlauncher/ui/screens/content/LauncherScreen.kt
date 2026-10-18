@@ -103,6 +103,9 @@ import com.movtery.zalithlauncher.game.versioninfo.MinecraftOfficialContentManag
 import coil3.compose.AsyncImage
 import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
+import com.movtery.zalithlauncher.ui.screens.content.minecraft.InstallationDownloadManager
+import com.movtery.zalithlauncher.utils.file.formatFileSize
+import com.movtery.zalithlauncher.ui.resolveAndroidString
 import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 
 object LauncherNavState {
@@ -435,6 +438,17 @@ fun LauncherScreen(
                         }
                     }
                 }
+
+                // Compact Bedrock Background Download Progress Bar Docked Above Bottom Nav Bar
+                CompactBackgroundDownloadBar(
+                    onExpand = {
+                        if (InstallationDownloadManager.activeInstaller.value != null) {
+                            InstallationDownloadManager.showDialog()
+                        } else {
+                            com.movtery.zalithlauncher.setting.AllSettings.launcherTaskMenuExpanded.save(true)
+                        }
+                    }
+                )
 
                 // 1:1 Replica Minecraft PC Mobile Launcher Bottom Navigation Bar
                 // Options: News | Versions | Mods | Profile
@@ -1056,12 +1070,19 @@ private fun HeroMinecraftCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        val mcVer = version?.getVersionInfo()?.minecraftVersion
+                        val verDisplay = if (mcVer != null && version != null) {
+                            "${version.getVersionName()} ($mcVer)"
+                        } else {
+                            version?.getVersionName() ?: latestReleaseVersion
+                        }
                         Text(
-                            text = version?.getVersionName() ?: latestReleaseVersion,
+                            text = verDisplay,
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.5.sp,
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -1259,9 +1280,15 @@ private fun InstalledVersionsSection(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.height(4.dp))
+                            val mcVer = ver.getVersionInfo()?.minecraftVersion
                             val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName ?: "Vanilla"
+                            val subtitleText = if (mcVer != null) {
+                                "Minecraft $mcVer • $loaderName"
+                            } else {
+                                "Loader: $loaderName"
+                            }
                             Text(
-                                text = "Loader: $loaderName",
+                                text = subtitleText,
                                 color = Color(0xFFAAAAAA),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 10.5.sp
@@ -1491,4 +1518,162 @@ private fun NewsSecurityDialog(
             )
         }
     )
+}
+
+@Composable
+private fun CompactBackgroundDownloadBar(
+    onExpand: () -> Unit
+) {
+    val runningTasks by com.movtery.zalithlauncher.coroutine.TaskSystem.tasksFlow.collectAsStateWithLifecycle()
+    val activeInstaller by InstallationDownloadManager.activeInstaller.collectAsStateWithLifecycle()
+    val showForegroundDialog by InstallationDownloadManager.showForegroundDialog.collectAsStateWithLifecycle()
+    val activeInstallName by InstallationDownloadManager.activeInstallationName.collectAsStateWithLifecycle()
+
+    val relevantTasks = remember(runningTasks) {
+        runningTasks.filter { it.id != com.movtery.zalithlauncher.game.account.MICROSOFT_LOGGING_TASK }
+    }
+
+    val hasActiveTasks = relevantTasks.isNotEmpty() || (activeInstaller != null && !showForegroundDialog)
+    if (!hasActiveTasks) return
+
+    val currentTask = if (activeInstaller != null) {
+        val tasks by activeInstaller!!.tasksFlow.collectAsStateWithLifecycle()
+        tasks.find { it.task.stage.value == com.movtery.zalithlauncher.coroutine.TaskStage.RUNNING }?.task
+            ?: tasks.firstOrNull()?.task
+    } else {
+        relevantTasks.firstOrNull()
+    } ?: return
+
+    val progress by currentTask.progress.collectAsStateWithLifecycle()
+    val message by currentTask.message.collectAsStateWithLifecycle()
+    val speed by currentTask.rateBytesPerSec.collectAsStateWithLifecycle()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(Color(0xFF1E1E20))
+            .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
+            .clickable { onExpand() }
+            .padding(horizontal = 12.dp, vertical = 7.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            val infiniteTransition = rememberInfiniteTransition(label = "compact_dl")
+            val alpha by infiniteTransition.animateFloat(
+                initialValue = 0.4f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(700, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "compact_alpha"
+            )
+
+            Icon(
+                painter = painterResource(id = R.drawable.ic_download),
+                contentDescription = null,
+                tint = Color(0xFF55FF55).copy(alpha = alpha),
+                modifier = Modifier.size(20.dp)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (activeInstallName != null) {
+                        Text(
+                            text = "DOWNLOADING ${activeInstallName!!.uppercase()}",
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                    } else if (message != null) {
+                        Text(
+                            text = resolveAndroidString(message!!).text,
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                    } else {
+                        Text(
+                            text = "DOWNLOADING GAME FILES...",
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                    }
+
+                    val spd = speed ?: 0L
+                    if (spd > 0L) {
+                        Text(
+                            text = "${formatFileSize(spd)}/s",
+                            color = Color(0xFF55FF55),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+
+                // Progress Bar
+                val progressFloat = progress.coerceIn(0f, 1f)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF2A2A2D))
+                ) {
+                    if (progressFloat > 0f) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(progressFloat)
+                                .fillMaxHeight()
+                                .background(Color(0xFF55FF55))
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.35f)
+                                .fillMaxHeight()
+                                .background(Color(0xFF3C8527).copy(alpha = alpha))
+                        )
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color(0xFF2E2E32))
+                    .border(BorderStroke(1.dp, Color(0xFF444448)), RoundedCornerShape(2.dp))
+                    .clickable { onExpand() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "VIEW",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
 }

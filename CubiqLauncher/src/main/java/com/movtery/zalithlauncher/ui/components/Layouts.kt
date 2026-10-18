@@ -299,7 +299,7 @@ fun TitleAndSummary(
     ) {
         Text(
             text = title,
-            style = titleStyle
+            style = if (titleStyle.fontFamily == null) titleStyle.copy(fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily) else titleStyle
         )
         summary?.let { text ->
             Text(

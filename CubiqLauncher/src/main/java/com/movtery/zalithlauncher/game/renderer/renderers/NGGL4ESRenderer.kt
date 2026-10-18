@@ -27,9 +27,13 @@ object NGGL4ESRenderer : RendererInterface {
 
     override fun getRendererName(): String = "Krypton Wrapper"
 
-    override fun getMaxMCVersion(): String = "26.3-snapshot-3"
+    override fun getRendererSummary(): String = "High-performance OpenGL ES 3 wrapper. Best for older devices lacking Vulkan support."
 
-    override fun getDisplayMaxMCVersion(): String = "26.2"
+    override fun getCompatibilityDescription(): String = "MC 1.7.10 – 1.21.4+ (GLES 3 • Non-Vulkan Optimal)"
+
+    override fun getMaxMCVersion(): String? = null
+
+    override fun getDisplayMaxMCVersion(): String? = null
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
         buildMap {

@@ -77,9 +77,31 @@ object ControlManager {
     fun checkDefaultAndRefresh(context: Context) {
         scope.launch(Dispatchers.IO) {
             val bedrockFile = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
-            if (!bedrockFile.exists()) {
+            val shouldOverwriteBedrock = runCatching {
+                if (!bedrockFile.exists()) true
+                else {
+                    val existing = loadLayoutFromFile(bedrockFile)
+                    existing.info.versionCode < 6
+                }
+            }.getOrDefault(!bedrockFile.exists())
+
+            if (shouldOverwriteBedrock) {
                 runCatching {
-                    context.copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = false)
+                    context.copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = true)
+                }
+            }
+            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+            val shouldOverwriteDefault = runCatching {
+                if (!defaultFile.exists()) true
+                else {
+                    val existing = loadLayoutFromFile(defaultFile)
+                    existing.info.versionCode < 6
+                }
+            }.getOrDefault(true)
+
+            if (shouldOverwriteDefault) {
+                runCatching {
+                    context.copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = true)
                 }
             }
             val files = PathManager.DIR_CONTROL_LAYOUTS.listFiles()
@@ -144,11 +166,16 @@ object ControlManager {
 
         val layout = _dataList.value.find { it.file.name == setting && it.isSupport }
             ?: _dataList.value.find { it.file.name == "bedrock_touch_layout.json" && it.isSupport }
+                ?.also { AllSettings.controlLayout.save(it.file.name) }
+            ?: _dataList.value.find { it.file.name == "default_layout.json" && it.isSupport }
+                ?.also { AllSettings.controlLayout.save(it.file.name) }
             ?: _dataList.value.firstOrNull { it.isSupport }
                 ?.also { AllSettings.controlLayout.save(it.file.name) }
 
         if (layout == null) {
             AllSettings.controlLayout.reset()
+        } else if (AllSettings.controlLayout.getValue().isEmpty()) {
+            AllSettings.controlLayout.save(layout.file.name)
         }
 
         _selectedLayout.update { layout }
@@ -162,10 +189,10 @@ object ControlManager {
     ) = withContext(Dispatchers.IO) {
         try {
             val bedrockFile = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
-            context.copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = false)
+            context.copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = true)
 
             val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
-            context.copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
+            context.copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = true)
         } catch (e: Exception) {
             Logger.warning(TAG, "Failed to unpack default control layouts", e)
         }

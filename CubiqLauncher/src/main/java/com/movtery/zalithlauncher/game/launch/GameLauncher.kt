@@ -31,6 +31,8 @@ import com.movtery.zalithlauncher.bridge.LoggerBridge.appendInfo
 import com.movtery.zalithlauncher.bridge.LoggerBridge.appendTitle
 import com.movtery.zalithlauncher.bridge.ZLBridge
 import com.movtery.zalithlauncher.context.readAssetFile
+import com.movtery.zalithlauncher.components.jre.Jre
+import com.movtery.zalithlauncher.components.jre.UnpackJreTask
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountType
 import com.movtery.zalithlauncher.game.account.offline.OfflineYggdrasilServer
@@ -228,7 +230,21 @@ class GameLauncher(
         javaRuntime: String,
         customArgs: String
     ): Int {
-        val runtime = RuntimesManager.forceReload(javaRuntime)
+        var runtime = RuntimesManager.forceReload(javaRuntime)
+        val runtimeHome = File(PathManager.DIR_MULTIRT, javaRuntime)
+        val internalJre = Jre.entries.firstOrNull { it.jreName == javaRuntime }
+        if (!runtimeHome.exists() || runtime.versionString == null || runtime.arch == null) {
+            if (internalJre != null) {
+                Logger.info(TAG, "Runtime $javaRuntime is missing or incomplete, unpacking before launch...")
+                runCatching {
+                    val task = UnpackJreTask(activity, internalJre)
+                    task.run()
+                }.onFailure { e ->
+                    Logger.error(TAG, "Failed to unpack runtime $javaRuntime", e)
+                }
+                runtime = RuntimesManager.forceReload(javaRuntime)
+            }
+        }
 
         val gameDirPath = version.getGameDir()
 

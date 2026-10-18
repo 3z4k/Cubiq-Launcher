@@ -291,7 +291,7 @@ private fun FilesLayout(
 
     BackgroundCard(
         modifier = modifier.offset { IntOffset(x = surfaceXOffset.roundToPx(), y = 0) },
-        shape = MaterialTheme.shapes.extraLarge
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopPathHeader(
@@ -356,7 +356,8 @@ private fun FileItem(
         modifier = modifier.graphicsLayer(scaleY = scale.value, scaleX = scale.value),
         color = color,
         contentColor = contentColor,
-        shape = MaterialTheme.shapes.large,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3C3B3B)),
         onClick = onClick
     ) {
         BaseFileItem(

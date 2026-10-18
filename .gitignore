@@ -35,4 +35,7 @@ LWJGL/*/build/
 # Binaries and release outputs
 *.apk
 release_binaries/
+.vs/
+Cubiq_Minecraft_Java_Touch_Controls*
+generate_asset_pack.py
 

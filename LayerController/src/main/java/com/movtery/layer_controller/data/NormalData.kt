@@ -44,6 +44,8 @@ data class NormalData(
     val buttonSize: ButtonSize,
     @SerialName("buttonStyle")
     val buttonStyle: String? = null,
+    @SerialName("icon")
+    val icon: String? = null,
     @SerialName("textAlignment")
     val textAlignment: TextAlignment = TextAlignment.Left,
     @SerialName("textBold")
@@ -75,6 +77,7 @@ data class NormalData(
                 this.position.isModified(other.position) ||
                 this.buttonSize.isModified(other.buttonSize) ||
                 this.buttonStyle != other.buttonStyle ||
+                this.icon != other.icon ||
                 this.textAlignment != other.textAlignment ||
                 this.textBold != other.textBold ||
                 this.textItalic != other.textItalic ||
@@ -115,6 +118,7 @@ fun NormalData.cloneNew(): NormalData = NormalData(
     position = CenterPosition,
     buttonSize = buttonSize,
     buttonStyle = buttonStyle,
+    icon = icon,
     textAlignment = textAlignment,
     textBold = textBold,
     textItalic = textItalic,

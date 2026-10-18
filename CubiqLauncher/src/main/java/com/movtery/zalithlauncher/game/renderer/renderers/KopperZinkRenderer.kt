@@ -27,9 +27,13 @@ object KopperZinkRenderer : RendererInterface {
 
     override fun getRendererName(): String = "Kopper Zink"
 
-    override fun getMaxMCVersion(): String = "26.3-snapshot-3"
+    override fun getRendererSummary(): String = "Desktop OpenGL over Vulkan via Zink. Highest performance for Vulkan-capable devices."
 
-    override fun getDisplayMaxMCVersion(): String = "26.2"
+    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.21.4+ (High Performance • Requires Vulkan 1.2+)"
+
+    override fun getMaxMCVersion(): String? = null
+
+    override fun getDisplayMaxMCVersion(): String? = null
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
         mapOf(

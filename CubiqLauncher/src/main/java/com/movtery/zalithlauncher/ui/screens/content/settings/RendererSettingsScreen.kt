@@ -378,33 +378,22 @@ fun RendererSettingsScreen(
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun RendererSummaryLayout(renderer: RendererInterface) {
-    FlowRow(
-        modifier = Modifier.alpha(0.7f),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         with(renderer) {
+            Text(
+                text = getCompatibilityDescription(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
             getRendererSummary()?.let { summary ->
-                Text(text = summary, style = MaterialTheme.typography.labelSmall)
-            }
-
-            val minVer = getDisplayMinMCVersion()
-            val maxVer = getDisplayMaxMCVersion()
-
-            if (minVer != null || maxVer != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(text = stringResource(R.string.renderer_version_support), style = MaterialTheme.typography.labelSmall)
-
-                    minVer?.let {
-                        Text(text = ">= $it", style = MaterialTheme.typography.labelSmall)
-                    }
-
-                    maxVer?.let {
-                        Text(text = "<= $it", style = MaterialTheme.typography.labelSmall)
-                    }
-                }
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.alpha(0.75f)
+                )
             }
         }
     }

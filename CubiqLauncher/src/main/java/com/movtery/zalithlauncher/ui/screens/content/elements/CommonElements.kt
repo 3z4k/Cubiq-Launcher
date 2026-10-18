@@ -367,6 +367,7 @@ fun TitleTaskFlowDialog(
     title: String,
     tasks: List<TitledTask>,
     onCancel: () -> Unit = {},
+    onBackground: (() -> Unit)? = null,
     logOutput: TaskLogOutput? = null
 ) {
     Dialog(
@@ -403,6 +404,7 @@ fun TitleTaskFlowDialog(
                         title = title,
                         tasks = tasks,
                         onCancel = onCancel,
+                        onBackground = onBackground,
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {
@@ -414,6 +416,7 @@ fun TitleTaskFlowDialog(
                             title = title,
                             tasks = tasks,
                             onCancel = onCancel,
+                            onBackground = onBackground,
                             modifier = Modifier.weight(1f)
                         )
                         TaskLogCard(
@@ -434,6 +437,7 @@ private fun TaskFlowListColumn(
     title: String,
     tasks: List<TitledTask>,
     onCancel: () -> Unit,
+    onBackground: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -468,15 +472,41 @@ private fun TaskFlowListColumn(
             }
         }
 
-        MinecraftButton(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(36.dp),
-            onClick = onCancel,
-            style = MinecraftButtonStyle.STONE,
-            text = stringResource(R.string.generic_cancel).uppercase(),
-            fontSize = 12.sp
-        )
+        if (onBackground != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                MinecraftButton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp),
+                    onClick = onCancel,
+                    style = MinecraftButtonStyle.STONE,
+                    text = stringResource(R.string.generic_cancel).uppercase(),
+                    fontSize = 11.sp
+                )
+                MinecraftButton(
+                    modifier = Modifier
+                        .weight(1.4f)
+                        .height(36.dp),
+                    onClick = onBackground,
+                    style = MinecraftButtonStyle.GREEN,
+                    text = "IN BACKGROUND",
+                    fontSize = 11.sp
+                )
+            }
+        } else {
+            MinecraftButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(36.dp),
+                onClick = onCancel,
+                style = MinecraftButtonStyle.STONE,
+                text = stringResource(R.string.generic_cancel).uppercase(),
+                fontSize = 12.sp
+            )
+        }
     }
 }
 

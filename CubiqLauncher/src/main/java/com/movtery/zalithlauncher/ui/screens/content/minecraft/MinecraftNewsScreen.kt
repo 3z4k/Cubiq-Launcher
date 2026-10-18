@@ -148,7 +148,7 @@ private fun NewsArticleCard(
                     .aspectRatio(16f / 9f)
                     .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                     .background(Color(0xFF141416)),
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Crop
             )
         } else {
             Image(

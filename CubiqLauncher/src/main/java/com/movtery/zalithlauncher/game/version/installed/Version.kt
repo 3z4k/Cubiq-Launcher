@@ -216,10 +216,21 @@ class Version(
 
     fun getGraphicsApi(): GraphicsApi = versionConfig.graphicsApi ?: AllSettings.graphicsApi.getValue()
 
-    fun getControlPath(): File? = versionConfig.control
-        .getValueOrDefault(AllSettings.controlLayout.getValue())
-        .takeIf { it.isNotEmpty() }
-        ?.let { fileName -> File(PathManager.DIR_CONTROL_LAYOUTS, fileName) }
+    fun getControlPath(): File? {
+        val configured = versionConfig.control
+            .getValueOrDefault(AllSettings.controlLayout.getValue())
+            .ifEmpty { "bedrock_touch_layout.json" }
+        val file = File(PathManager.DIR_CONTROL_LAYOUTS, configured)
+        if (file.exists()) return file
+
+        val bedrock = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
+        if (bedrock.exists()) return bedrock
+
+        val default = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+        if (default.exists()) return default
+
+        return null
+    }
 
     fun getJavaRuntime(): String = versionConfig.javaRuntime
 

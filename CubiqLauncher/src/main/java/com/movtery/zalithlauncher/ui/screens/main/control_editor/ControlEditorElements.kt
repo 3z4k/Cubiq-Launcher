@@ -36,6 +36,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -256,7 +258,7 @@ fun EditorMenu(
             Text(
                 modifier = Modifier.padding(all = 8.dp),
                 text = stringResource(R.string.control_editor_menu_title),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium.copy(fontFamily = MinecraftFontFamily)
             )
         },
         leftMenuContent = {
@@ -283,7 +285,7 @@ fun EditorMenu(
             Text(
                 modifier = Modifier.padding(all = 8.dp),
                 text = stringResource(R.string.control_editor_layers_title),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium.copy(fontFamily = MinecraftFontFamily)
             )
             //切换控件层聚焦
             IconButton(
@@ -751,7 +753,7 @@ private fun ControlLayerItem(
     color: Color,
     contentColor: Color,
     borderColor: Color = MaterialTheme.colorScheme.primary,
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(4.dp),
     shadowElevation: Dp = 0.dp,
     enabled: Boolean = true
 ) {

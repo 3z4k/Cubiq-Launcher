@@ -47,7 +47,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -123,7 +125,7 @@ enum class MenuState {
 fun MenuSubscreen(
     state: MenuState,
     closeScreen: () -> Unit,
-    shape: Shape = RoundedCornerShape(21.0.dp),
+    shape: Shape = RoundedCornerShape(4.dp),
     backgroundColor: Color = Color.Black.copy(alpha = 0.25f),
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -183,7 +185,7 @@ fun MenuSubscreen(
 fun DualMenuSubscreen(
     state: MenuState,
     closeScreen: () -> Unit,
-    shape: Shape = RoundedCornerShape(21.0.dp),
+    shape: Shape = RoundedCornerShape(4.dp),
     backgroundColor: Color = Color.Black.copy(alpha = 0.25f),
     titleHeight: Dp = 48.dp,
     leftMenuTitle: (@Composable BoxScope.() -> Unit)? = null,
@@ -316,7 +318,7 @@ fun MenuTextButton(
     text: String,
     enabled: Boolean = true,
     influencedByBackground: Boolean = false,
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(4.dp),
     color: Color = itemColor(influencedByBackground),
     contentColor: Color = onItemColor(),
     appendLayout: (@Composable () -> Unit)? = null,
@@ -338,7 +340,7 @@ fun MenuTextButton(
                 .alpha(if (enabled) 1f else DisabledAlpha)
                 .weight(1f),
             text = text,
-            style = MaterialTheme.typography.titleSmall
+            style = MaterialTheme.typography.titleSmall.copy(fontFamily = MinecraftFontFamily)
         )
 
         appendLayout?.invoke()
@@ -353,7 +355,7 @@ fun MenuSwitchButton(
     onSwitch: (Boolean) -> Unit,
     enabled: Boolean = true,
     influencedByBackground: Boolean = false,
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(4.dp),
     color: Color = itemColor(influencedByBackground),
     contentColor: Color = onItemColor(),
 ) {
@@ -378,7 +380,7 @@ fun MenuSwitchButton(
                     .weight(1f)
                     .alpha(if (enabled) 1f else DisabledAlpha),
                 text = text,
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleSmall.copy(fontFamily = MinecraftFontFamily)
             )
             DefaultSwitch(
                 checked = switch,
@@ -405,7 +407,7 @@ fun <E> MenuListLayout(
     enabled: Boolean = true,
     maxListHeight: Dp = 200.dp,
     influencedByBackground: Boolean = false,
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(4.dp),
     color: Color = itemColor(influencedByBackground),
     contentColor: Color = onItemColor(),
 ) {
@@ -565,7 +567,7 @@ fun MenuSliderLayout(
     suffix: String? = null,
     influencedByBackground: Boolean = false,
     colors: SliderColors = SliderDefaults.colors(),
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(4.dp),
     color: Color = itemColor(influencedByBackground),
     contentColor: Color = onItemColor(),
 ) {
@@ -645,7 +647,7 @@ fun MenuSliderLayout(
     decimalFormat: String = "#0.00",
     influencedByBackground: Boolean = false,
     colors: SliderColors = SliderDefaults.colors(),
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(4.dp),
     color: Color = itemColor(influencedByBackground),
     contentColor: Color = onItemColor(),
 ) {
@@ -719,7 +721,7 @@ fun MenuButtonLayout(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     influencedByBackground: Boolean = false,
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(4.dp),
     color: Color = itemColor(influencedByBackground),
     contentColor: Color = onItemColor(),
     blur: Int = AllSettings.backgroundBlur.state,
@@ -738,6 +740,7 @@ fun MenuButtonLayout(
         shape = shape,
         color = color,
         contentColor = contentColor,
+        border = BorderStroke(1.dp, Color(0xFF3C3B3B)),
         enabled = enabled,
         onClick = onClick
     ) {

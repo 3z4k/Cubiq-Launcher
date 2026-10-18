@@ -37,6 +37,12 @@ data class Runtime(
         isJDK8 = false
     )
 
-    fun isCompatible(): Boolean =
-        versionString != null && DEVICE_ARCHITECTURE == archAsInt(arch)
+    fun isCompatible(): Boolean {
+        if (versionString == null) return false
+        val rtArch = archAsInt(arch)
+        if (DEVICE_ARCHITECTURE == rtArch) return true
+        if (DEVICE_ARCHITECTURE == com.movtery.zalithlauncher.utils.device.Architecture.ARCH_ARM64 && rtArch == com.movtery.zalithlauncher.utils.device.Architecture.ARCH_ARM) return true
+        if (DEVICE_ARCHITECTURE == com.movtery.zalithlauncher.utils.device.Architecture.ARCH_ARM && rtArch == com.movtery.zalithlauncher.utils.device.Architecture.ARCH_ARM64) return true
+        return false
+    }
 }

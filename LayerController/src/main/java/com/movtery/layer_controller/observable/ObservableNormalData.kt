@@ -39,6 +39,7 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
     var position by mutableStateOf(data.position)
     var buttonSize by mutableStateOf(data.buttonSize)
     var buttonStyle by mutableStateOf(data.buttonStyle)
+    var icon by mutableStateOf(data.icon)
     var textAlignment by mutableStateOf(data.textAlignment)
     var textBold by mutableStateOf(data.textBold)
     var textItalic by mutableStateOf(data.textItalic)
@@ -212,6 +213,7 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
             position = position,
             buttonSize = buttonSize,
             buttonStyle = buttonStyle,
+            icon = icon,
             textAlignment = textAlignment,
             textBold = textBold,
             textItalic = textItalic,

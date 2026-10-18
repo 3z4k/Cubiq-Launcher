@@ -59,6 +59,7 @@ private const val BUNDLE_CONTROL = "BUNDLE_CONTROL"
 
 @AndroidEntryPoint
 class ControlEditorActivity : BaseAppCompatActivity() {
+    override fun isFullScreenActivity(): Boolean = true
     override fun isIgnoreNotch(): Boolean = true
 
     override fun getTaskDescriptionTitle(): String = getString(R.string.control_manage_info_edit)
@@ -95,14 +96,31 @@ class ControlEditorActivity : BaseAppCompatActivity() {
         if (controlFile == null) {
             val bedrockFile = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
             val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
-            if (!bedrockFile.exists()) {
+            val shouldOverwriteBedrock = runCatching {
+                if (!bedrockFile.exists()) true
+                else {
+                    val existing = loadLayoutFromFile(bedrockFile)
+                    existing.info.versionCode < 6
+                }
+            }.getOrDefault(!bedrockFile.exists())
+
+            if (shouldOverwriteBedrock) {
                 runCatching {
-                    copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = false)
+                    copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = true)
                 }
             }
-            if (!defaultFile.exists()) {
+
+            val shouldOverwriteDefault = runCatching {
+                if (!defaultFile.exists()) true
+                else {
+                    val existing = loadLayoutFromFile(defaultFile)
+                    existing.info.versionCode < 6
+                }
+            }.getOrDefault(true)
+
+            if (shouldOverwriteDefault) {
                 runCatching {
-                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
+                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = true)
                 }
             }
             controlFile = if (bedrockFile.exists()) bedrockFile else defaultFile

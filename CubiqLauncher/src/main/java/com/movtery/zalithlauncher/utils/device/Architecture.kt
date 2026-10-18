@@ -36,7 +36,7 @@ object Architecture {
     fun getAddressSpaceLimit() = if (is64BitsDevice) ADDRESS_SPACE_LIMIT_64_BIT else ADDRESS_SPACE_LIMIT_32_BIT
 
     val is64BitsDevice: Boolean
-        get() = Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()
+        get() = android.os.Process.is64Bit()
 
     val is32BitsDevice: Boolean
         get() = !is64BitsDevice

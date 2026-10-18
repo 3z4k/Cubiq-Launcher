@@ -76,6 +76,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.movtery.layer_controller.data.lang.createTranslatable
 import com.movtery.layer_controller.layout.EmptyControlLayout
 import com.movtery.layer_controller.layout.EmptyLayoutInfo
+import com.movtery.layer_controller.layout.loadLayoutFromFile
 import com.movtery.layer_controller.utils.newRandomFileName
 import com.movtery.layer_controller.utils.saveToFile
 import com.movtery.zalithlauncher.BuildKeys
@@ -590,17 +591,40 @@ fun MinecraftProfileScreen(
                             activeControlLayoutName = name
                         },
                         onLaunchEditor = {
-                            val activeControl = controlLayouts.find { it.file.name == activeControlLayoutName } ?: controlLayouts.firstOrNull()
-                            val activeFile = activeControl?.file
-                                ?: File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json").takeIf { it.exists() }
-                                ?: File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json").takeIf { it.exists() }
-                                ?: run {
-                                    val f = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
-                                    runCatching {
-                                        context.copyAssetFile("bedrock_touch_layout.json", f, false)
-                                    }
-                                    f
+                            val bedrockFile = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
+                            val shouldOverwriteBedrock = runCatching {
+                                if (!bedrockFile.exists()) true
+                                else {
+                                    val existing = loadLayoutFromFile(bedrockFile)
+                                    existing.info.versionCode < 6
                                 }
+                            }.getOrDefault(!bedrockFile.exists())
+                            if (shouldOverwriteBedrock) {
+                                runCatching {
+                                    context.copyAssetFile("bedrock_touch_layout.json", bedrockFile, true)
+                                }
+                            }
+                            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+                            val shouldOverwriteDefault = runCatching {
+                                if (!defaultFile.exists()) true
+                                else {
+                                    val existing = loadLayoutFromFile(defaultFile)
+                                    existing.info.versionCode < 6
+                                }
+                            }.getOrDefault(true)
+                            if (shouldOverwriteDefault) {
+                                runCatching {
+                                    context.copyAssetFile("default_layout.json", defaultFile, true)
+                                }
+                            }
+
+                            val activeControl = controlLayouts.find { it.file.name == activeControlLayoutName }
+                                ?: controlLayouts.find { it.file.name == "bedrock_touch_layout.json" }
+                                ?: controlLayouts.firstOrNull()
+                            val activeFile = activeControl?.file
+                                ?: bedrockFile.takeIf { it.exists() }
+                                ?: File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json").takeIf { it.exists() }
+                                ?: bedrockFile
                             startEditorActivity(context, activeFile)
                         },
                         onCreateNewLayout = { showCreateLayoutDialog = true }
@@ -1753,8 +1777,8 @@ private fun VideoSettingsTab(
                             fontSize = 12.sp
                         )
                         Text(
-                            text = renderer.getUniqueIdentifier(),
-                            color = Color(0xFF888888),
+                            text = renderer.getCompatibilityDescription(),
+                            color = if (isSel) Color(0xFFCCCCCC) else Color(0xFF888888),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.sp
                         )

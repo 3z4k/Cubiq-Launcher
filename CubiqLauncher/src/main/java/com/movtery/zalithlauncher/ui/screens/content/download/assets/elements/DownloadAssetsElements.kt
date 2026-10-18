@@ -224,9 +224,9 @@ fun AssetsVersionItemLayout(
     infoMap: VersionInfoMap,
     defaultExpanded: Boolean = infoMap.isAdapt,
     maxListHeight: Dp = rememberMaxHeight(),
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
     influencedByBackground: Boolean = true,
-    color: Color = cardColor(influencedByBackground),
+    color: Color = Color(0xFF1E1E20),
     contentColor: Color = onCardColor(),
     blur: Int = AllSettings.backgroundBlur.state,
     installedChecker: ((PlatformVersion) -> InstalledMod?)? = null,
@@ -238,7 +238,8 @@ fun AssetsVersionItemLayout(
         modifier = modifier,
         shape = shape,
         color = color,
-        contentColor = contentColor
+        contentColor = contentColor,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF383838))
     ) {
         Column(
             modifier = Modifier

@@ -466,7 +466,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 全局默认控制布局文件名
      */
-    val controlLayout = stringSetting("controlLayout", "")
+    val controlLayout = stringSetting("controlLayout", "bedrock_touch_layout.json")
 
     //Other
     /**

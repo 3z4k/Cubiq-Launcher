@@ -106,7 +106,8 @@ fun FavoriteIdentifier(
     modifier: Modifier = Modifier,
     iconSize: Dp = 12.dp,
     shape: Shape = RoundedCornerShape(2.dp),
-    textStyle: TextStyle = TextStyle(fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+    textStyle: TextStyle = TextStyle(fontFamily = MinecraftFontFamily, fontSize = 10.sp),
+    showText: Boolean = true
 ) {
     val color = if (isFavorite) {
         Color(0xFF3C8527)
@@ -141,10 +142,14 @@ fun FavoriteIdentifier(
                     ),
                     contentDescription = favoriteStateText(isFavorite)
                 )
-                Text(
-                    text = favoriteStateText(isFavorite),
-                    style = textStyle
-                )
+                if (showText) {
+                    Text(
+                        text = favoriteStateText(isFavorite),
+                        style = textStyle,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
             }
         }
     }

@@ -47,7 +47,13 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.ui.screens.content.elements.DisabledAlpha
 import com.movtery.zalithlauncher.utils.math.addBigDecimal
@@ -119,7 +125,12 @@ fun SimpleTextSlider(
                 onValueChangeFinished = onValueChangeFinished,
                 valueRange = valueRange,
                 steps = steps,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color(0xFF2ECC71),
+                    inactiveTrackColor = Color(0xFF383840)
+                )
             )
         }
         Surface(
@@ -127,9 +138,10 @@ fun SimpleTextSlider(
                 .alpha(alpha = if (enabled) 1f else DisabledAlpha)
                 .padding(start = 12.dp)
                 .align(Alignment.CenterVertically),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            shape = RoundedCornerShape(3.dp),
+            color = Color(0xFF26262B),
+            contentColor = Color.White,
+            border = BorderStroke(1.dp, Color(0xFF424248))
         ) {
             Row(
                 modifier = Modifier.padding(PaddingValues(horizontal = 8.dp, vertical = 4.dp)),
@@ -145,10 +157,21 @@ fun SimpleTextSlider(
                 ) {
                     Text(
                         text = getTextString(value),
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = Color.White,
+                        style = TextStyle(
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 12.sp
+                        )
                     )
                     suffix?.let { text ->
-                        Text(text = text)
+                        Text(
+                            text = text,
+                            color = Color(0xFFAAAAAA),
+                            style = TextStyle(
+                                fontFamily = MinecraftFontFamily,
+                                fontSize = 12.sp
+                            )
+                        )
                     }
                 }
                 if (fineTuningControl) {
@@ -206,7 +229,13 @@ fun IndicatorSlider(
     onValueChangeFinished: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     @IntRange(from = 0) steps: Int = 0,
-    colors: SliderColors = SliderDefaults.colors()
+    colors: SliderColors = SliderDefaults.colors(
+        thumbColor = Color.White,
+        activeTrackColor = Color(0xFF2ECC71),
+        inactiveTrackColor = Color(0xFF383840),
+        activeTickColor = Color.Transparent,
+        inactiveTickColor = Color.Transparent
+    )
 ) {
     /** Slider顶部需要裁切的像素 */
     val sliderTopCut = with(LocalDensity.current) { 8.dp.toPx().toInt() }

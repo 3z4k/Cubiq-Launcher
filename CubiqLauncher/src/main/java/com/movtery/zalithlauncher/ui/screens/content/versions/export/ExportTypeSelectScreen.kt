@@ -204,7 +204,7 @@ private fun TypeItem(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily)
                 )
 
                 Text(

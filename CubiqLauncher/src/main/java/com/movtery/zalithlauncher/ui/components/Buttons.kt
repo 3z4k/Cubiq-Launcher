@@ -20,6 +20,8 @@ package com.movtery.zalithlauncher.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -74,6 +76,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.movtery.zalithlauncher.ui.screens.content.elements.DisabledAlpha
 import kotlinx.coroutines.launch
 
@@ -82,10 +85,13 @@ fun ScalingActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = ButtonDefaults.shape,
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
+    colors: ButtonColors = ButtonDefaults.buttonColors(
+        containerColor = Color(0xFF2E8540),
+        contentColor = Color.White
+    ),
     elevation: ButtonElevation? = ButtonDefaults.buttonElevation(),
-    border: BorderStroke? = null,
+    border: BorderStroke? = BorderStroke(1.dp, Color(0xFF388E3C)),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -109,9 +115,16 @@ fun ScalingActionButton(
         elevation = elevation,
         border = border,
         contentPadding = contentPadding,
-        interactionSource = interactionSource,
-        content = content
-    )
+        interactionSource = interactionSource
+    ) {
+        CompositionLocalProvider(
+            LocalTextStyle provides LocalTextStyle.current.merge(
+                TextStyle(fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily)
+            )
+        ) {
+            content()
+        }
+    }
 }
 
 @Composable
@@ -198,20 +211,41 @@ fun IconTextButton(
 fun BaseIconTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
     icon: @Composable (Modifier) -> Unit,
     text: String,
-    style: TextStyle = MaterialTheme.typography.labelMedium,
+    style: TextStyle = TextStyle(
+        fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+        color = Color.White,
+        fontSize = 12.sp
+    ),
     enabled: Boolean = true,
     onLongClick: () -> Unit = {},
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
     Row(
         modifier = modifier
             .clip(shape = shape)
-            .combinedClickable(enabled = enabled, onClick = onClick, onLongClick = onLongClick)
-            .padding(PaddingValues(horizontal = 8.dp, vertical = 4.dp))
+            .border(
+                BorderStroke(1.dp, if (isPressed) Color(0xFF202024) else Color(0xFF424248)),
+                shape
+            )
+            .background(
+                if (isPressed) Color(0xFF1E1E22) else Color(0xFF2C2C32)
+            )
+            .combinedClickable(
+                enabled = enabled,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                interactionSource = interactionSource,
+                indication = null
+            )
+            .padding(PaddingValues(horizontal = 10.dp, vertical = 6.dp))
             .alpha(if (enabled) 1f else DisabledAlpha),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         icon(Modifier.align(Alignment.CenterVertically))
         Text(
