@@ -355,12 +355,14 @@ fun MinecraftProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Tab Bar: Horizontal Scrollable Row for all 8 categories
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+            val tabsScrollState = rememberScrollState()
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(tabsScrollState),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                 SettingsTab.entries.forEach { tab ->
                     val isTabSelected = selectedTab == tab
                     val interactionSource = remember { MutableInteractionSource() }
@@ -438,6 +440,20 @@ fun MinecraftProfileScreen(
                             )
                         )
                     }
+                }
+            }
+
+            if (tabsScrollState.canScrollForward) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    0.88f to Color.Transparent,
+                                    1.0f to Color(0xFF141414)
+                                )
+                            )
+                    )
                 }
             }
 
