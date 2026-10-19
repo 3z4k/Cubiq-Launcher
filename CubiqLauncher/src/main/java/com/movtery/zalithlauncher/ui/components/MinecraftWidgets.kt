@@ -412,7 +412,7 @@ fun MinecraftPCBottomNavBar(
                 onClick = { onItemSelected(0) }
             )
 
-            // 1: Versions
+            // 1: Play
             MinecraftPCNavItem(
                 modifier = Modifier
                     .weight(1f)
@@ -420,11 +420,11 @@ fun MinecraftPCBottomNavBar(
                 icon = { isSel ->
                     Image(
                         painter = painterResource(R.drawable.ic_mc_pc_versions),
-                        contentDescription = "Versions",
+                        contentDescription = "Play",
                         modifier = Modifier.size(26.dp)
                     )
                 },
-                label = "Versions",
+                label = "Play",
                 isSelected = selectedItem == 1,
                 onClick = { onItemSelected(1) }
             )
