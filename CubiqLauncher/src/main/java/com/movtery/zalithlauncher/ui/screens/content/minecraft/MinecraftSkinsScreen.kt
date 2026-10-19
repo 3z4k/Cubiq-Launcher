@@ -56,6 +56,7 @@ import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.ui.components.MinecraftButton
 import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
+import com.movtery.zalithlauncher.ui.screens.content.elements.PlayerFace
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -378,16 +379,29 @@ fun MinecraftSkinsScreen(
                                     .background(Color(0xFF28282A)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                val avatarModel: Any = if (isCurrentSkin && activeSkinFile != null && activeSkinFile.exists()) {
-                                    activeSkinFile
+                                if (isCurrentSkin) {
+                                    if (account != null) {
+                                        PlayerFace(
+                                            account = account,
+                                            avatarSize = 34.dp,
+                                            refreshKey = refreshWardrobe
+                                        )
+                                    } else {
+                                        Image(
+                                            painter = painterResource(R.drawable.img_minecraft),
+                                            contentDescription = label,
+                                            modifier = Modifier.size(34.dp)
+                                        )
+                                    }
                                 } else {
-                                    "https://mc-heads.net/avatar/$username/64.png"
+                                    AsyncImage(
+                                        model = "https://mc-heads.net/avatar/$username/64.png",
+                                        contentDescription = label,
+                                        modifier = Modifier.size(36.dp),
+                                        fallback = painterResource(R.drawable.img_minecraft),
+                                        error = painterResource(R.drawable.img_minecraft)
+                                    )
                                 }
-                                AsyncImage(
-                                    model = avatarModel,
-                                    contentDescription = label,
-                                    modifier = Modifier.size(36.dp)
-                                )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
