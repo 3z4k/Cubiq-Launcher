@@ -1282,10 +1282,11 @@ private fun InstalledVersionsSection(
                             Spacer(modifier = Modifier.height(4.dp))
                             val mcVer = ver.getVersionInfo()?.minecraftVersion
                             val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName ?: "Vanilla"
-                            val subtitleText = if (mcVer != null) {
-                                "Minecraft $mcVer • $loaderName"
+                            val hasRealMc = mcVer != null && (mcVer != ver.getVersionName() || mcVer.contains("."))
+                            val subtitleText = if (hasRealMc) {
+                                "$loaderName • $mcVer"
                             } else {
-                                "Loader: $loaderName"
+                                loaderName
                             }
                             Text(
                                 text = subtitleText,

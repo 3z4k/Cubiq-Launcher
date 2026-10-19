@@ -312,12 +312,12 @@ fun MinecraftInstallationsScreen(
                     }
 
                     val mcVer = ver.getVersionInfo()?.minecraftVersion
-                    val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName
-                    val versionSubtitle = when {
-                        mcVer != null && loaderName != null -> "$mcVer • $loaderName"
-                        mcVer != null -> "$mcVer • Official Release"
-                        loaderName != null -> "${ver.getVersionName()} • $loaderName"
-                        else -> "${ver.getVersionName()} • Official Release"
+                    val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName ?: "Vanilla"
+                    val hasRealMc = mcVer != null && (mcVer != ver.getVersionName() || mcVer.contains("."))
+                    val versionSubtitle = if (hasRealMc) {
+                        "$loaderName • $mcVer"
+                    } else {
+                        loaderName
                     }
 
                     InstallationCardItem(

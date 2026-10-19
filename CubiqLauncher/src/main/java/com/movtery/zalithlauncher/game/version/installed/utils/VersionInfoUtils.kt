@@ -164,11 +164,15 @@ private fun extractMinecraftVersion(json: JsonObject, folderName: String? = null
         val clientVersion = json.get("clientVersion").asString
         if (clientVersion.isNotEmptyOrBlank()) return clientVersion
     }
+    if (json.has("minClientVersion") && json.get("minClientVersion").isJsonPrimitive) {
+        val minClientVersion = json.get("minClientVersion").asString
+        if (minClientVersion.isNotEmptyOrBlank()) return minClientVersion
+    }
 
     //尝试从 LaunchFor (ZL安装的版本) 获取信息
     json.getAsJsonObject("launchFor")
         ?.getAsJsonArray("infos")
-        ?.firstOrNull { it.isJsonObject && it.asJsonObject["name"]?.asString == "Minecraft" }
+        ?.firstOrNull { it.isJsonObject && it.asJsonObject["name"]?.asString?.equals("Minecraft", ignoreCase = true) == true }
         ?.asJsonObject
         ?.getAsJsonPrimitive("version")
         ?.asString
@@ -190,6 +194,15 @@ private fun extractMinecraftVersion(json: JsonObject, folderName: String? = null
             if (group == "net.minecraft" && (artifact == "client" || artifact == "server")) {
                 return version
             }
+            if (group == "net.fabricmc" && artifact == "intermediary") {
+                return version
+            }
+            if (group == "org.quiltmc" && artifact == "hashed") {
+                return version
+            }
+            if ((group == "net.minecraftforge" || group == "net.neoforged") && (artifact == "forge" || artifact == "neoforge")) {
+                EXTRACT_MC_VERSION_REGEX.find(version)?.value?.let { return it }
+            }
         }
     }
 
@@ -198,6 +211,14 @@ private fun extractMinecraftVersion(json: JsonObject, folderName: String? = null
         val extracted = EXTRACT_MC_VERSION_REGEX.find(inherits)?.value
         if (extracted != null) return extracted
         return inherits
+    }
+
+    //尝试从 assetIndex 或 assets 寻找真实Minecraft版本
+    json.getAsJsonObject("assetIndex")?.get("id")?.asString?.let { assetId ->
+        EXTRACT_MC_VERSION_REGEX.find(assetId)?.value?.let { return it }
+    }
+    json.get("assets")?.asString?.let { assets ->
+        EXTRACT_MC_VERSION_REGEX.find(assets)?.value?.let { return it }
     }
 
     val id = if (json.has("id") && json.get("id").isJsonPrimitive) json.get("id").asString else (folderName ?: "Unknown")
