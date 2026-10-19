@@ -981,8 +981,19 @@ private fun DeleteAccountConfirmDialog(
         confirmButton = {
             MinecraftButton(
                 onClick = {
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                     scope.launch(Dispatchers.IO) {
+                        val isCurrent = AllSettings.currentAccount.getValue() == account.uniqueUUID
                         AccountsManager.deleteAccount(account)
+                        if (isCurrent) {
+                            val remaining = AccountsManager.accountsFlow.value.filter { it.uniqueUUID != account.uniqueUUID }
+                            val next = remaining.firstOrNull()
+                            if (next != null) {
+                                AccountsManager.setCurrentAccount(next)
+                            } else {
+                                AllSettings.currentAccount.save("")
+                            }
+                        }
                         withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Account deleted", Toast.LENGTH_SHORT).show()
                             onDeleted()
@@ -999,7 +1010,10 @@ private fun DeleteAccountConfirmDialog(
         },
         dismissButton = {
             MinecraftButton(
-                onClick = onDismiss,
+                onClick = {
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                    onDismiss()
+                },
                 style = MinecraftButtonStyle.STONE,
                 text = "CANCEL",
                 fontSize = 11.5.sp,
@@ -1400,7 +1414,10 @@ private fun AccountSection(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .clickable { onDeleteAccount(acc) },
+                            .clickable {
+                                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                                onDeleteAccount(acc)
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
