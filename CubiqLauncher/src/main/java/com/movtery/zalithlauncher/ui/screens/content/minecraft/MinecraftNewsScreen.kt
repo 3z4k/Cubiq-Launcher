@@ -146,8 +146,7 @@ private fun NewsArticleCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                    .background(Color(0xFF141416)),
+                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)),
                 contentScale = ContentScale.Crop
             )
         } else {

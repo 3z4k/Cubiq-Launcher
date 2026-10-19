@@ -166,7 +166,7 @@ object MinecraftOfficialContentManager {
                 val readMore = obj.get("readMoreLink")?.asString ?: "https://www.minecraft.net"
                 val playImg = obj.getAsJsonObject("playPageImage")
                 val newsImg = obj.getAsJsonObject("newsPageImage")
-                val relImg = playImg?.get("url")?.asString ?: newsImg?.get("url")?.asString
+                val relImg = newsImg?.get("url")?.asString ?: playImg?.get("url")?.asString
                 val fullImg = if (relImg != null) {
                     if (relImg.startsWith("http")) relImg else "https://launchercontent.mojang.com$relImg"
                 } else ""
