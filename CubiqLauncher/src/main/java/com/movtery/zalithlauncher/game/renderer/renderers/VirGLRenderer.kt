@@ -31,7 +31,7 @@ object VirGLRenderer : RendererInterface {
 
     override fun getRendererSummary(): String = "Gallium VirGL rasterizer. Fallback option for devices without Vulkan or Turnip support."
 
-    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.20.4 (Mesa VirGL • Non-Vulkan Fallback)"
+    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.20.4 • Compatibility fallback"
 
     override fun getMaxMCVersion(): String? = null
 

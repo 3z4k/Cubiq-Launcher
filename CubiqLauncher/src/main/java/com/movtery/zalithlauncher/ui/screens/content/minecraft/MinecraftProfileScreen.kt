@@ -1785,13 +1785,32 @@ private fun VideoSettingsTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = renderer.getRendererName(),
-                            color = if (isSel) Color(0xFF55FF55) else Color.White,
-                            fontFamily = MinecraftFontFamily,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = renderer.getRendererName(),
+                                color = if (isSel) Color(0xFF55FF55) else Color.White,
+                                fontFamily = MinecraftFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                            if (renderer.isRecommended()) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(3.dp))
+                                        .background(Color(0xFF2E6930))
+                                        .padding(horizontal = 5.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "RECOMMENDED",
+                                        color = Color(0xFF55FF55),
+                                        fontFamily = MinecraftFontFamily,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 8.sp
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = renderer.getCompatibilityDescription(),
                             color = if (isSel) Color(0xFFCCCCCC) else Color(0xFF888888),

@@ -29,7 +29,7 @@ object KopperZinkRenderer : RendererInterface {
 
     override fun getRendererSummary(): String = "Desktop OpenGL over Vulkan via Zink. Highest performance for Vulkan-capable devices."
 
-    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.21.4+ (High Performance • Requires Vulkan 1.2+)"
+    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.21.4+ • Best performance (requires Vulkan)"
 
     override fun getMaxMCVersion(): String? = null
 

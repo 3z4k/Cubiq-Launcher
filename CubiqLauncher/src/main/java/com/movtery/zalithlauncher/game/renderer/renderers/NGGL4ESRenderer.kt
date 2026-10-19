@@ -29,7 +29,9 @@ object NGGL4ESRenderer : RendererInterface {
 
     override fun getRendererSummary(): String = "High-performance OpenGL ES 3 wrapper. Best for older devices lacking Vulkan support."
 
-    override fun getCompatibilityDescription(): String = "MC 1.7.10 – 1.21.4+ (GLES 3 • Non-Vulkan Optimal)"
+    override fun isRecommended(): Boolean = true
+
+    override fun getCompatibilityDescription(): String = "MC 1.7.10 – 1.21.4+ • Most compatible for all devices"
 
     override fun getMaxMCVersion(): String? = null
 

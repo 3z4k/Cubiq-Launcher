@@ -63,6 +63,11 @@ interface RendererInterface {
     fun getDisplayMaxMCVersion(): String? = getMaxMCVersion()
 
     /**
+     * 是否为官方推荐选项
+     */
+    fun isRecommended(): Boolean = false
+
+    /**
      * 获取渲染器兼容性说明（展示最佳兼容的 Minecraft 版本及架构信息）
      */
     fun getCompatibilityDescription(): String {
